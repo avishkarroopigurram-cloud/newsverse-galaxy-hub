@@ -485,7 +485,7 @@ function Index() {
           <div className="foot-grid">
             <div className="foot-col">
               <div className="logo" style={{ marginBottom: 16 }}>
-                <img src={logoAsset.url} alt="NewsVerse" className="logo-img" />
+                <span className="logo-badge"><img src={logoAsset.url} alt="NewsVerse" className="logo-img" /></span>
                 <span className="logo-text">news<span className="dot">•</span>verse</span>
               </div>
               <p style={{ color: "var(--gray)", fontSize: 13, lineHeight: 1.6, maxWidth: 220 }}>
