@@ -118,9 +118,10 @@ function ArticlePage() {
 
         {a.url && (
           <a href={a.url} target="_blank" rel="noopener noreferrer" className="mt-6 inline-block text-red-400 underline">
-            Read original story at {a.source_name} →
+            Read original story{prettySourceName(a.source_name) ? ` at ${prettySourceName(a.source_name)}` : ""} →
           </a>
         )}
+
 
         {a.keywords && a.keywords.length > 0 && (
           <div className="mt-8 flex flex-wrap gap-2">
