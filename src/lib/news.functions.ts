@@ -93,7 +93,7 @@ export const getArticleBySlug = createServerFn({ method: "GET" })
       .eq("slug", data.slug)
       .eq("status", "approved")
       .maybeSingle();
-    if (!article) return { article: null, related: [] as unknown[] };
+    if (!article) return { article: null, related: [] as Array<{ id: string }> };
 
     const { data: related } = await sb
       .from("articles")
