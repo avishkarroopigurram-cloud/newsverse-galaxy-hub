@@ -213,7 +213,7 @@ function Home() {
                 style={{ background: "linear-gradient(to right, rgb(250 250 250) 60%, rgba(250,250,250,0))" }}
               />
               <div className="pl-20 md:pl-24 w-full overflow-hidden">
-                <div className="flex gap-10 animate-[nv-scroll_30s_linear_infinite] whitespace-nowrap text-sm text-neutral-800 will-change-transform">
+                <div className="flex gap-10 animate-[nv-scroll_20s_linear_infinite] whitespace-nowrap text-sm text-neutral-800 will-change-transform">
                   {[...breaking.data, ...breaking.data].map((b, i) => (
                     <Link key={`${b.id}-${i}`} to="/article/$slug" params={{ slug: b.slug }} className="hover:text-black inline-flex items-center gap-2">
                       <span className="font-semibold" style={{ color: ACCENT }}>●</span>
