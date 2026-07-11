@@ -14,16 +14,174 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      article_fetch_log: {
+        Row: {
+          category: string | null
+          duplicate_count: number
+          error: string | null
+          id: string
+          inserted_count: number
+          ran_at: string
+          rate_limited: boolean
+          status: string
+        }
+        Insert: {
+          category?: string | null
+          duplicate_count?: number
+          error?: string | null
+          id?: string
+          inserted_count?: number
+          ran_at?: string
+          rate_limited?: boolean
+          status?: string
+        }
+        Update: {
+          category?: string | null
+          duplicate_count?: number
+          error?: string | null
+          id?: string
+          inserted_count?: number
+          ran_at?: string
+          rate_limited?: boolean
+          status?: string
+        }
+        Relationships: []
+      }
+      articles: {
+        Row: {
+          ai_categorized_as: string | null
+          ai_meta_description: string | null
+          ai_summary: string | null
+          ai_takeaways: string[] | null
+          author: string | null
+          category: string
+          content: string | null
+          country: string | null
+          created_at: string
+          description: string | null
+          external_id: string
+          fetched_at: string
+          id: string
+          image_url: string | null
+          is_breaking: boolean
+          is_editors_pick: boolean
+          is_featured: boolean
+          keywords: string[] | null
+          language: string | null
+          published_at: string | null
+          reading_time_minutes: number | null
+          search_vector: unknown
+          slug: string
+          source_id: string | null
+          source_name: string | null
+          status: string
+          title: string
+          updated_at: string
+          url: string | null
+          view_count: number
+        }
+        Insert: {
+          ai_categorized_as?: string | null
+          ai_meta_description?: string | null
+          ai_summary?: string | null
+          ai_takeaways?: string[] | null
+          author?: string | null
+          category: string
+          content?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          external_id: string
+          fetched_at?: string
+          id?: string
+          image_url?: string | null
+          is_breaking?: boolean
+          is_editors_pick?: boolean
+          is_featured?: boolean
+          keywords?: string[] | null
+          language?: string | null
+          published_at?: string | null
+          reading_time_minutes?: number | null
+          search_vector?: unknown
+          slug: string
+          source_id?: string | null
+          source_name?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          url?: string | null
+          view_count?: number
+        }
+        Update: {
+          ai_categorized_as?: string | null
+          ai_meta_description?: string | null
+          ai_summary?: string | null
+          ai_takeaways?: string[] | null
+          author?: string | null
+          category?: string
+          content?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          external_id?: string
+          fetched_at?: string
+          id?: string
+          image_url?: string | null
+          is_breaking?: boolean
+          is_editors_pick?: boolean
+          is_featured?: boolean
+          keywords?: string[] | null
+          language?: string | null
+          published_at?: string | null
+          reading_time_minutes?: number | null
+          search_vector?: unknown
+          slug?: string
+          source_id?: string | null
+          source_name?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          url?: string | null
+          view_count?: number
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "editor" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +308,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "editor", "user"],
+    },
   },
 } as const
