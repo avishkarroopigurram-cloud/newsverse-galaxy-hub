@@ -1,6 +1,8 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { getArticleBySlug } from "@/lib/news.functions";
+import { prettySourceName } from "@/lib/source-name";
+
 
 const articleQuery = (slug: string) =>
   queryOptions({
