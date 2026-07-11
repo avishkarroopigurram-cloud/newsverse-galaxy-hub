@@ -90,7 +90,7 @@ function Home() {
     ...data.trending,
     ...data.latest,
   ];
-  const featured = pickEditorialLead(leadPool) as A | null;
+  const featured = pickEditorialLead(leadPool.filter((a) => !!a.image_url)) as A | null;
 
   // Build feed slices for the editorial grid without repeats.
   const seen = new Set<string>();
