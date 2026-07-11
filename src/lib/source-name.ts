@@ -51,34 +51,19 @@ function looksLikeDomain(s: string): boolean {
  * Returns a clean, human-friendly publication brand name, or null if unknown.
  * Never returns a raw domain — if we can't map it to a brand, we hide the source.
  */
-export function prettySourceName(raw: string | null | undefined): string | null {
-  if (!raw) return null;
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
-
-  const key = stripDomain(trimmed);
-  if (BRAND_MAP[key]) return BRAND_MAP[key];
-
-  // partial domain match
-  for (const [domain, brand] of Object.entries(BRAND_MAP)) {
-    if (key === domain || key.endsWith("." + domain)) return brand;
-  }
-
-  // If input looks like a domain and we don't recognize it, hide it.
-  if (looksLikeDomain(trimmed)) return null;
-
-  // Otherwise it's already a plain name — return as-is.
-  return trimmed;
+export function prettySourceName(_raw: string | null | undefined): string | null {
+  // Editorial policy: never display external publication/source names on the public site.
+  return null;
 }
 
 /**
  * Source label for cards: shows "NEWSVERSE ORIGINALS" for originals,
- * a clean brand name if known, otherwise null (hide).
+ * otherwise null (hide). External source names are never shown.
  */
 export function sourceLabel(opts: {
   source_name?: string | null;
   is_original?: boolean | null;
 }): string | null {
   if (opts.is_original) return "NEWSVERSE ORIGINALS";
-  return prettySourceName(opts.source_name);
+  return null;
 }
