@@ -95,7 +95,7 @@ export const listAdminArticles = createServerFn({ method: "GET" })
     let q = supabaseAdmin
       .from("articles")
       .select(
-        "id, slug, title, category, status, is_featured, is_breaking, is_editors_pick, published_at, source_name",
+        "id, slug, title, category, status, is_featured, is_breaking, is_editors_pick, is_original, published_at, source_name",
         { count: "exact" },
       );
     if (data.status !== "all") q = q.eq("status", data.status);
