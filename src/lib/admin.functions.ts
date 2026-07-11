@@ -116,6 +116,7 @@ export const updateArticleAdmin = createServerFn({ method: "POST" })
         is_featured: z.boolean().optional(),
         is_breaking: z.boolean().optional(),
         is_editors_pick: z.boolean().optional(),
+        is_original: z.boolean().optional(),
       })
       .parse(input),
   )
