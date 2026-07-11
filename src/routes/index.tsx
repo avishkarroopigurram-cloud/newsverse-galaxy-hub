@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getHomepageFeed, getBreaking } from "@/lib/news.functions";
 import { SECTION_ORDER, SECTION_LABELS, type SectionSlug } from "@/lib/newsdata.server";
 import { supabase } from "@/integrations/supabase/client";
+import { AdSlot, StickyMobileAd } from "@/components/AdSlot";
 import logoAsset from "@/assets/newsverse-logo.png.asset.json";
 
 const feedQuery = queryOptions({
@@ -19,23 +20,52 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "NewsVerse — Truth Beyond Headlines" },
-      { name: "description", content: "NewsVerse: AI-augmented Indian journalism — Telangana, Hyderabad, India, world, business, technology, AI, sports, entertainment and analysis." },
+      { name: "description", content: "Premium editorial journalism from Telangana, Hyderabad, India and the world. Breaking news, politics, business, technology, science, sports and analysis — augmented by AI." },
+      { property: "og:title", content: "NewsVerse — Truth Beyond Headlines" },
+      { property: "og:description", content: "Premium editorial journalism from Telangana, Hyderabad, India and the world." },
+      { property: "og:url", content: "https://newsverse.today/" },
+    ],
+    links: [{ rel: "canonical", href: "https://newsverse.today/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "NewsMediaOrganization",
+          name: "NewsVerse",
+          url: "https://newsverse.today",
+          logo: "https://newsverse.today/favicon.ico",
+          sameAs: [],
+        }),
+      },
     ],
   }),
   component: Home,
 });
+
+type A = {
+  id: string; slug: string; title: string; description: string | null;
+  image_url: string | null; category: string; source_name: string | null;
+  author: string | null; published_at: string | null;
+  reading_time_minutes: number | null; is_breaking: boolean;
+  is_featured: boolean; is_editors_pick: boolean; view_count: number;
+  keywords: string[] | null;
+};
+
+const ACCENT = "#c8102e"; // editorial red
 
 function Home() {
   const { data } = useSuspenseQuery(feedQuery);
   const breaking = useQuery({
     queryKey: ["breaking-live"],
     queryFn: () => getBreaking(),
-    refetchInterval: 60_000, // live-refresh breaking every minute
+    refetchInterval: 60_000,
     initialData: data.breaking,
     staleTime: 30_000,
   });
 
   const [session, setSession] = useState<{ email: string } | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setSession(data.user ? { email: data.user.email ?? "" } : null));
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
@@ -45,43 +75,127 @@ function Home() {
   }, []);
 
   const anyData = data.latest.length > 0 || data.telanganaLead != null;
+  const featured = data.featured ?? data.telanganaLead ?? data.latest[0] ?? null;
+
+  // Build feed slices for the editorial grid without repeats.
+  const seen = new Set<string>();
+  const take = (arr: A[] | null | undefined, n: number, skip: (a: A) => boolean = () => false) => {
+    const out: A[] = [];
+    for (const a of arr ?? []) {
+      if (out.length >= n) break;
+      if (seen.has(a.id) || skip(a)) continue;
+      seen.add(a.id);
+      out.push(a);
+    }
+    return out;
+  };
+  if (featured) seen.add(featured.id);
+  const topStories = take(data.latest, 4);
+  const telanganaRail = take([data.telanganaLead, ...data.telanganaRail].filter(Boolean) as A[], 4);
+  const hyderabad = take(data.hyderabad, 3);
+  const trending = data.trending; // ranked; may overlap intentionally
+  const editors = take(data.editorsPicks, 4);
+  const moreLatest = take(data.latest, 8);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0a0a0f]/90 backdrop-blur">
-        <div className="max-w-7xl mx-auto flex items-center gap-4 px-4 py-3">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="rounded-lg bg-white p-1.5 shadow-lg">
+    <div className="min-h-screen bg-white text-neutral-900" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+      {/* ---------- TOP NAV ---------- */}
+      <div className="hidden md:block bg-neutral-950 text-white text-xs">
+        <div className="max-w-[1400px] mx-auto flex items-center justify-between px-6 py-2">
+          <div className="flex items-center gap-4 text-white/70">
+            <span>{new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>
+            <span className="h-3 w-px bg-white/20" />
+            <Link to="/section/$slug" params={{ slug: "weather" as SectionSlug }} className="hover:text-white">Weather</Link>
+            <Link to="/section/$slug" params={{ slug: "business" as SectionSlug }} className="hover:text-white">Markets</Link>
+          </div>
+          <div className="flex items-center gap-4 text-white/70">
+            <a href="#newsletter" className="hover:text-white">Newsletter</a>
+            {session ? (
+              <Link to="/admin" className="hover:text-white">Admin</Link>
+            ) : (
+              <Link to="/auth" className="hover:text-white">Sign in</Link>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-neutral-200">
+        <div className="max-w-[1400px] mx-auto grid grid-cols-[auto_1fr_auto] items-center gap-4 px-4 md:px-6 py-3">
+          <button
+            aria-label="Open menu"
+            onClick={() => setMenuOpen((v) => !v)}
+            className="lg:hidden h-9 w-9 grid place-items-center rounded-md hover:bg-neutral-100"
+          >
+            <span className="i-menu block w-5 h-[2px] bg-neutral-900 relative before:content-[''] before:absolute before:-top-1.5 before:left-0 before:w-5 before:h-[2px] before:bg-neutral-900 after:content-[''] after:absolute after:top-1.5 after:left-0 after:w-5 after:h-[2px] after:bg-neutral-900" />
+          </button>
+
+          <Link to="/" className="flex items-center gap-2.5 min-w-0">
+            <div className="rounded-md bg-white p-1.5 ring-1 ring-neutral-200">
               <img src={logoAsset.url} alt="NewsVerse" className="h-8 w-auto" />
             </div>
-            <span className="hidden sm:inline font-bold tracking-tight text-lg">NEWS<span className="text-red-500">VERSE</span></span>
+            <span className="font-black tracking-tight text-xl leading-none">
+              NEWS<span style={{ color: ACCENT }}>VERSE</span>
+            </span>
           </Link>
-          <nav className="hidden lg:flex items-center gap-1 text-sm ml-6 overflow-x-auto">
-            {SECTION_ORDER.slice(0, 10).map((s) => (
-              <Link key={s} to="/section/$slug" params={{ slug: s }} className="px-2.5 py-1.5 rounded-md text-white/70 hover:text-white hover:bg-white/5 whitespace-nowrap">
+
+          <nav className="hidden lg:flex items-center gap-1 text-sm justify-center col-start-2 row-start-1 justify-self-center">
+            {SECTION_ORDER.slice(0, 9).map((s) => (
+              <Link
+                key={s}
+                to="/section/$slug"
+                params={{ slug: s }}
+                className="px-2.5 py-1.5 rounded-md text-neutral-700 hover:text-neutral-950 hover:bg-neutral-100 whitespace-nowrap font-medium"
+              >
                 {SECTION_LABELS[s]}
               </Link>
             ))}
           </nav>
-          <div className="ml-auto flex items-center gap-3">
-            <Link to="/search" className="text-sm text-white/70 hover:text-white">Search</Link>
+
+          <div className="flex items-center gap-2 justify-self-end">
+            <Link to="/search" aria-label="Search" className="h-9 w-9 grid place-items-center rounded-md hover:bg-neutral-100 text-neutral-700">
+              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" strokeLinecap="round" /></svg>
+            </Link>
             {session ? (
-              <Link to="/admin" className="text-sm rounded-md border border-white/15 px-3 py-1.5 hover:bg-white/5">Admin</Link>
+              <Link to="/admin" className="hidden sm:inline text-sm rounded-md border border-neutral-300 px-3 py-1.5 hover:bg-neutral-50 font-medium">Admin</Link>
             ) : (
-              <Link to="/auth" className="text-sm rounded-md bg-red-600 hover:bg-red-500 px-3 py-1.5">Sign in</Link>
+              <Link to="/auth" className="hidden sm:inline text-sm rounded-md px-3 py-1.5 font-semibold text-white" style={{ backgroundColor: ACCENT }}>
+                Subscribe
+              </Link>
             )}
           </div>
         </div>
 
-        {/* Breaking ticker */}
+        {menuOpen && (
+          <nav className="lg:hidden border-t border-neutral-200 bg-white">
+            <div className="max-w-[1400px] mx-auto px-2 py-2 grid grid-cols-3 gap-1">
+              {SECTION_ORDER.map((s) => (
+                <Link
+                  key={s}
+                  to="/section/$slug"
+                  params={{ slug: s }}
+                  onClick={() => setMenuOpen(false)}
+                  className="px-3 py-2 text-sm text-neutral-700 rounded-md hover:bg-neutral-100"
+                >
+                  {SECTION_LABELS[s]}
+                </Link>
+              ))}
+            </div>
+          </nav>
+        )}
+
         {breaking.data && breaking.data.length > 0 && (
-          <div className="border-t border-white/10 bg-red-950/30">
-            <div className="max-w-7xl mx-auto flex items-center gap-4 px-4 py-2 overflow-hidden">
-              <span className="rounded bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest shrink-0">Breaking</span>
-              <div className="flex gap-8 animate-[scroll_60s_linear_infinite] whitespace-nowrap text-sm">
+          <div className="border-t border-neutral-200 bg-neutral-50">
+            <div className="max-w-[1400px] mx-auto flex items-center gap-3 px-4 md:px-6 py-2 overflow-hidden">
+              <span
+                className="rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest shrink-0 text-white"
+                style={{ backgroundColor: ACCENT }}
+              >
+                Live
+              </span>
+              <div className="flex gap-10 animate-[nv-scroll_75s_linear_infinite] whitespace-nowrap text-sm text-neutral-800">
                 {[...breaking.data, ...breaking.data].map((b, i) => (
-                  <Link key={`${b.id}-${i}`} to="/article/$slug" params={{ slug: b.slug }} className="hover:text-red-300">
+                  <Link key={`${b.id}-${i}`} to="/article/$slug" params={{ slug: b.slug }} className="hover:text-black">
+                    <span className="font-semibold" style={{ color: ACCENT }}>●</span>{" "}
                     {b.title}
                   </Link>
                 ))}
@@ -91,82 +205,128 @@ function Home() {
         )}
       </header>
 
-      <style>{`@keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }`}</style>
+      <style>{`
+        @keyframes nv-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        @keyframes nv-fadeup { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .nv-fadeup { animation: nv-fadeup .6s ease both; }
+      `}</style>
+
+      {/* ---------- LEADERBOARD ---------- */}
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6 pt-6">
+        <AdSlot size="leaderboard" slotId="top-leaderboard" className="hidden md:flex" />
+        <AdSlot size="mobile-banner" slotId="top-mobile" className="md:hidden" />
+      </div>
 
       {!anyData ? (
         <EmptyState />
       ) : (
-        <main className="max-w-7xl mx-auto px-4 py-10 space-y-16">
-          {/* Featured */}
-          {(data.featured || data.telanganaLead) && (
-            <Featured article={(data.featured ?? data.telanganaLead)!} />
-          )}
+        <main className="max-w-[1400px] mx-auto px-4 md:px-6 pb-16">
+          {/* ---------- HERO GRID (Featured + Top Stories rail) ---------- */}
+          <section className="mt-8 grid gap-8 lg:grid-cols-[1.7fr_1fr] nv-fadeup">
+            {featured && <Featured article={featured} />}
+            <aside className="border-l lg:pl-8 border-neutral-200">
+              <SectionEyebrow>Top Stories</SectionEyebrow>
+              <ul className="mt-4 divide-y divide-neutral-200">
+                {topStories.map((a) => (
+                  <li key={a.id} className="py-4 first:pt-0">
+                    <TopStoryItem article={a} />
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6">
+                <AdSlot size="rectangle" slotId="hero-rail-1" />
+              </div>
+            </aside>
+          </section>
 
-          {/* Telangana flagship */}
-          {data.telanganaLead && (
+          {/* ---------- TELANGANA FLAGSHIP ---------- */}
+          {telanganaRail.length > 0 && (
             <SectionBlock
-              eyebrow="Flagship · Telangana"
-              title="Telangana Today"
+              accent
+              eyebrow="Flagship"
+              title="Telangana"
+              subtitle="Our home ground. Deep reporting from across the state."
               viewAll="telangana"
             >
-              <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-                <ArticleHero article={data.telanganaLead} />
-                <div className="space-y-4">
-                  {data.telanganaRail.map((a) => <RailItem key={a.id} article={a} />)}
+              <div className="grid gap-8 lg:grid-cols-[1.5fr_1fr_1fr]">
+                {telanganaRail[0] && <EditorialCard article={telanganaRail[0]} size="lg" />}
+                <div className="space-y-6">
+                  {telanganaRail.slice(1, 3).map((a) => <EditorialCard key={a.id} article={a} size="md" />)}
+                </div>
+                <div className="space-y-6">
+                  {telanganaRail.slice(3).map((a) => <EditorialCard key={a.id} article={a} size="md" />)}
+                  {telanganaRail.length < 4 && <AdSlot size="rectangle" slotId="telangana-rail" />}
                 </div>
               </div>
             </SectionBlock>
           )}
 
-          {/* Hyderabad */}
-          {data.hyderabad.length > 0 && (
-            <SectionBlock eyebrow="Local · Hyderabad" title="Hyderabad" viewAll="hyderabad">
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {data.hyderabad.map((a) => <Card key={a.id} article={a} />)}
+          {/* ---------- HYDERABAD + IN-FEED AD ---------- */}
+          {hyderabad.length > 0 && (
+            <SectionBlock eyebrow="City" title="Hyderabad" viewAll="hyderabad">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                {hyderabad.slice(0, 2).map((a) => <EditorialCard key={a.id} article={a} size="md" />)}
+                <AdSlot size="in-feed" slotId="hyderabad-infeed" className="md:col-span-2 lg:col-span-1" />
+                {hyderabad.slice(2).map((a) => <EditorialCard key={a.id} article={a} size="md" />)}
               </div>
             </SectionBlock>
           )}
 
-          {/* Trending */}
-          {data.trending.length > 0 && (
-            <SectionBlock eyebrow="Most read" title="Trending Now">
+          <div className="my-14">
+            <AdSlot size="billboard" slotId="mid-billboard" />
+          </div>
+
+          {/* ---------- SECTIONS 2-COL: TRENDING + EDITOR'S PICKS ---------- */}
+          <section className="grid gap-10 lg:grid-cols-2 mt-14">
+            {trending.length > 0 && (
+              <div>
+                <SectionHeader eyebrow="Most read" title="Trending" />
+                <ol className="mt-6 space-y-5">
+                  {trending.slice(0, 5).map((a, i) => (
+                    <li key={a.id}>
+                      <RankedItem rank={i + 1} article={a} />
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+            {editors.length > 0 && (
+              <div>
+                <SectionHeader eyebrow="Curated" title="Editor's Picks" />
+                <div className="mt-6 grid gap-6 sm:grid-cols-2">
+                  {editors.map((a) => <EditorialCard key={a.id} article={a} size="sm" />)}
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* ---------- CATEGORY STRIPS ---------- */}
+          <CategoryStrips exclude={new Set(["telangana", "hyderabad", "breaking"])} />
+
+          {/* ---------- LATEST FEED ---------- */}
+          {moreLatest.length > 0 && (
+            <SectionBlock eyebrow="Live" title="Latest News">
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {data.trending.map((a, i) => (
-                  <Link key={a.id} to="/article/$slug" params={{ slug: a.slug }} className="group flex gap-3">
-                    <span className="text-5xl font-serif text-red-500/60 leading-none" style={{ fontFamily: "Fraunces, serif" }}>{i + 1}</span>
-                    <div>
-                      <div className="text-[10px] uppercase tracking-widest text-red-400">{a.category}</div>
-                      <h3 className="text-sm font-semibold group-hover:text-red-300 mt-1 leading-snug">{a.title}</h3>
-                    </div>
-                  </Link>
+                {moreLatest.map((a, i) => (
+                  <div key={a.id}>
+                    <EditorialCard article={a} size="sm" />
+                    {i === 3 && <div className="mt-6 sm:col-span-2 lg:col-span-4"><AdSlot size="in-feed" slotId="latest-infeed" /></div>}
+                  </div>
                 ))}
               </div>
             </SectionBlock>
           )}
 
-          {/* Editor's picks */}
-          {data.editorsPicks.length > 0 && (
-            <SectionBlock eyebrow="Curated" title="Editor's Picks">
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {data.editorsPicks.map((a) => <Card key={a.id} article={a} />)}
-              </div>
-            </SectionBlock>
-          )}
-
-          {/* Latest */}
-          {data.latest.length > 0 && (
-            <SectionBlock eyebrow="Live" title="Latest News">
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {data.latest.map((a) => <Card key={a.id} article={a} />)}
-              </div>
-            </SectionBlock>
-          )}
-
-          {/* All sections links */}
+          {/* ---------- ALL SECTIONS ---------- */}
           <SectionBlock eyebrow="Explore" title="All sections">
             <div className="flex flex-wrap gap-2">
               {SECTION_ORDER.map((s) => (
-                <Link key={s} to="/section/$slug" params={{ slug: s }} className="rounded-full border border-white/15 px-4 py-2 text-sm hover:bg-white/5 hover:border-white/30">
+                <Link
+                  key={s}
+                  to="/section/$slug"
+                  params={{ slug: s }}
+                  className="rounded-full border border-neutral-300 px-4 py-2 text-sm hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-colors"
+                >
                   {SECTION_LABELS[s]}
                 </Link>
               ))}
@@ -175,120 +335,364 @@ function Home() {
         </main>
       )}
 
-      <footer className="border-t border-white/10 mt-16">
-        <div className="max-w-7xl mx-auto px-4 py-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4 text-sm">
+      {/* ---------- TRANSITION → DARK ---------- */}
+      <div aria-hidden className="h-32 bg-gradient-to-b from-white to-neutral-950" />
+
+      {/* ---------- NEWSLETTER ---------- */}
+      <section id="newsletter" className="bg-neutral-950 text-white">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-16 grid gap-8 lg:grid-cols-2 items-center">
           <div>
-            <div className="font-bold text-lg">NEWS<span className="text-red-500">VERSE</span></div>
-            <p className="mt-3 text-white/60">Truth beyond headlines. AI-augmented Indian journalism.</p>
+            <div className="text-xs uppercase tracking-[0.3em]" style={{ color: "#ff6b6b" }}>The Morning Verse</div>
+            <h2 className="mt-3 text-4xl md:text-5xl font-semibold leading-tight" style={{ fontFamily: "Fraunces, serif" }}>
+              The stories shaping India, in your inbox by 7 AM.
+            </h2>
+            <p className="mt-4 text-white/70 max-w-xl">
+              A five-minute editorial briefing. No noise. No clickbait. Just what matters — curated by NewsVerse editors and augmented with AI context.
+            </p>
           </div>
-          <div>
-            <div className="font-semibold mb-3">Sections</div>
-            <ul className="space-y-1.5 text-white/60">
-              {SECTION_ORDER.slice(0, 7).map((s) => (
-                <li key={s}><Link to="/section/$slug" params={{ slug: s }} className="hover:text-white">{SECTION_LABELS[s]}</Link></li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <div className="font-semibold mb-3">More</div>
-            <ul className="space-y-1.5 text-white/60">
-              {SECTION_ORDER.slice(7).map((s) => (
-                <li key={s}><Link to="/section/$slug" params={{ slug: s }} className="hover:text-white">{SECTION_LABELS[s]}</Link></li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <div className="font-semibold mb-3">Founder</div>
-            <p className="text-white/60">Dr. Mattepally Rajanikanth<br />Founder & Editor-in-Chief</p>
-          </div>
+          <form
+            onSubmit={(e) => e.preventDefault()}
+            className="flex flex-col sm:flex-row gap-3 lg:justify-end"
+          >
+            <input
+              type="email"
+              required
+              placeholder="you@example.com"
+              className="flex-1 min-w-0 rounded-md bg-white/5 border border-white/15 px-4 py-3 text-white placeholder:text-white/40 focus:outline-none focus:border-white/40"
+            />
+            <button
+              type="submit"
+              className="rounded-md px-6 py-3 font-semibold text-white shrink-0"
+              style={{ backgroundColor: ACCENT }}
+            >
+              Subscribe free
+            </button>
+          </form>
         </div>
-        <div className="border-t border-white/10 px-4 py-4 text-center text-xs text-white/40">
-          © {new Date().getFullYear()} NewsVerse. News sourced via NewsData.io and enriched with AI.
+      </section>
+
+      {/* ---------- FOOTER BANNER AD ---------- */}
+      <div className="bg-neutral-950 border-t border-white/10">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-6">
+          <AdSlot size="leaderboard" slotId="footer-banner" tone="dark" />
+        </div>
+      </div>
+
+      {/* ---------- FOOTER ---------- */}
+      <footer className="bg-neutral-950 text-white border-t border-white/10">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-5 text-sm">
+          <div className="lg:col-span-2">
+            <div className="flex items-center gap-2.5">
+              <div className="rounded-md bg-white p-1.5">
+                <img src={logoAsset.url} alt="NewsVerse" className="h-8 w-auto" />
+              </div>
+              <div className="font-black tracking-tight text-xl">
+                NEWS<span style={{ color: ACCENT }}>VERSE</span>
+              </div>
+            </div>
+            <p className="mt-4 text-white/60 max-w-sm leading-relaxed">
+              Truth beyond headlines. Premium editorial journalism from Telangana to the world, augmented with AI, powered by trusted global news sources.
+            </p>
+            <div className="mt-6">
+              <div className="text-white/50 text-xs uppercase tracking-[0.2em]">Founder</div>
+              <p className="mt-2 text-white/80">Dr. Mattepally Rajanikanth</p>
+              <p className="text-white/50 text-xs">Founder & Editor-in-Chief</p>
+            </div>
+          </div>
+          <FooterCol title="News">
+            {SECTION_ORDER.slice(0, 8).map((s) => (
+              <li key={s}><Link to="/section/$slug" params={{ slug: s }} className="text-white/60 hover:text-white">{SECTION_LABELS[s]}</Link></li>
+            ))}
+          </FooterCol>
+          <FooterCol title="More">
+            {SECTION_ORDER.slice(8).map((s) => (
+              <li key={s}><Link to="/section/$slug" params={{ slug: s }} className="text-white/60 hover:text-white">{SECTION_LABELS[s]}</Link></li>
+            ))}
+          </FooterCol>
+          <FooterCol title="Company">
+            <li><Link to="/search" className="text-white/60 hover:text-white">Search</Link></li>
+            <li><a href="#newsletter" className="text-white/60 hover:text-white">Newsletter</a></li>
+            <li><Link to="/auth" className="text-white/60 hover:text-white">Sign in</Link></li>
+            <li><a href="/sitemap.xml" className="text-white/60 hover:text-white">Sitemap</a></li>
+          </FooterCol>
+        </div>
+        <div className="border-t border-white/10">
+          <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-5 flex flex-wrap items-center justify-between gap-3 text-xs text-white/50">
+            <p>© {new Date().getFullYear()} NewsVerse. All rights reserved.</p>
+            <p>Aggregated from trusted global sources · Enriched with AI · Made in India.</p>
+          </div>
         </div>
       </footer>
+
+      <StickyMobileAd />
     </div>
   );
 }
+
+// ---------------- COMPONENTS ----------------
 
 function EmptyState() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-24 text-center">
-      <h1 className="text-4xl font-serif font-semibold" style={{ fontFamily: "Fraunces, serif" }}>NewsVerse is loading its first stories</h1>
-      <p className="mt-4 text-white/60">
-        Automatic news ingestion runs every 15 minutes. The first batch will appear here within a few minutes,
-        or an editor can trigger a manual refresh from the admin dashboard.
+      <h1 className="text-4xl font-semibold text-neutral-900" style={{ fontFamily: "Fraunces, serif" }}>
+        NewsVerse is loading its first stories
+      </h1>
+      <p className="mt-4 text-neutral-600">
+        Automatic news ingestion runs every 15 minutes. Fresh stories will appear here shortly — or an editor can trigger a manual refresh from the admin dashboard.
       </p>
-      <Link to="/auth" className="mt-6 inline-block rounded-md bg-red-600 hover:bg-red-500 px-5 py-2.5 font-medium">Sign in as editor</Link>
+      <Link to="/auth" className="mt-6 inline-block rounded-md px-5 py-2.5 font-medium text-white" style={{ backgroundColor: ACCENT }}>
+        Sign in as editor
+      </Link>
     </div>
   );
 }
 
-type A = { id: string; slug: string; title: string; description: string | null; image_url: string | null; category: string; source_name: string | null; author: string | null; published_at: string | null; reading_time_minutes: number | null; is_breaking: boolean; is_featured: boolean; is_editors_pick: boolean; view_count: number; keywords: string[] | null };
-
-function SectionBlock({ eyebrow, title, viewAll, children }: { eyebrow: string; title: string; viewAll?: SectionSlug; children: React.ReactNode }) {
+function SectionEyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <section>
-      <div className="flex items-end justify-between mb-6">
-        <div>
-          <div className="text-xs uppercase tracking-widest text-red-400">{eyebrow}</div>
-          <h2 className="mt-1 text-2xl md:text-3xl font-serif font-semibold" style={{ fontFamily: "Fraunces, serif" }}>{title}</h2>
-        </div>
-        {viewAll && <Link to="/section/$slug" params={{ slug: viewAll }} className="text-sm text-white/60 hover:text-white">View all →</Link>}
+    <div className="flex items-center gap-3">
+      <span className="h-[2px] w-8" style={{ backgroundColor: ACCENT }} />
+      <span className="text-[11px] uppercase tracking-[0.25em] font-bold" style={{ color: ACCENT }}>{children}</span>
+    </div>
+  );
+}
+
+function SectionHeader({ eyebrow, title, subtitle, viewAll }: { eyebrow: string; title: string; subtitle?: string; viewAll?: SectionSlug }) {
+  return (
+    <div className="flex items-end justify-between gap-4 border-b border-neutral-200 pb-4">
+      <div className="min-w-0">
+        <SectionEyebrow>{eyebrow}</SectionEyebrow>
+        <h2 className="mt-2 text-3xl md:text-4xl font-semibold tracking-tight text-neutral-900" style={{ fontFamily: "Fraunces, serif" }}>{title}</h2>
+        {subtitle && <p className="mt-1 text-sm text-neutral-500">{subtitle}</p>}
       </div>
-      {children}
+      {viewAll && (
+        <Link to="/section/$slug" params={{ slug: viewAll }} className="text-sm font-semibold text-neutral-700 hover:text-neutral-950 shrink-0">
+          See all →
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function SectionBlock({
+  eyebrow, title, subtitle, viewAll, accent, children,
+}: {
+  eyebrow: string; title: string; subtitle?: string; viewAll?: SectionSlug;
+  accent?: boolean; children: React.ReactNode;
+}) {
+  return (
+    <section className={`mt-14 ${accent ? "relative" : ""}`}>
+      {accent && (
+        <div aria-hidden className="absolute -left-4 md:-left-6 top-0 bottom-0 w-1" style={{ backgroundColor: ACCENT }} />
+      )}
+      <SectionHeader eyebrow={eyebrow} title={title} subtitle={subtitle} viewAll={viewAll} />
+      <div className="mt-8">{children}</div>
     </section>
   );
 }
 
 function Featured({ article }: { article: A }) {
   return (
-    <Link to="/article/$slug" params={{ slug: article.slug }} className="group block relative rounded-2xl overflow-hidden border border-white/10">
-      {article.image_url && <img src={article.image_url} alt="" className="w-full h-[420px] object-cover" loading="eager" />}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 p-8">
-        <div className="text-xs uppercase tracking-widest text-red-400">Featured · {article.category}</div>
-        <h2 className="mt-2 text-3xl md:text-5xl font-serif font-semibold leading-tight group-hover:text-red-300" style={{ fontFamily: "Fraunces, serif" }}>{article.title}</h2>
-        {article.description && <p className="mt-3 text-white/70 max-w-3xl line-clamp-2">{article.description}</p>}
+    <Link to="/article/$slug" params={{ slug: article.slug }} className="group block">
+      {article.image_url && (
+        <div className="relative overflow-hidden rounded-md aspect-[16/10] bg-neutral-100">
+          <img
+            src={article.image_url}
+            alt=""
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+            loading="eager"
+          />
+          {article.is_breaking && (
+            <span
+              className="absolute top-4 left-4 rounded px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white shadow-md"
+              style={{ backgroundColor: ACCENT }}
+            >
+              Breaking
+            </span>
+          )}
+        </div>
+      )}
+      <div className="mt-5">
+        <div className="text-[11px] uppercase tracking-[0.25em] font-bold" style={{ color: ACCENT }}>
+          {article.category}
+        </div>
+        <h1
+          className="mt-3 text-3xl md:text-5xl font-semibold leading-[1.05] tracking-tight text-neutral-900 group-hover:text-neutral-700"
+          style={{ fontFamily: "Fraunces, serif" }}
+        >
+          {article.title}
+        </h1>
+        {article.description && (
+          <p className="mt-4 text-lg text-neutral-600 leading-relaxed line-clamp-3 max-w-3xl">
+            {article.description}
+          </p>
+        )}
+        <div className="mt-4 text-xs text-neutral-500 flex flex-wrap items-center gap-x-3 gap-y-1">
+          {article.source_name && <span className="font-medium text-neutral-700">{article.source_name}</span>}
+          {article.published_at && <span>· {timeAgo(article.published_at)}</span>}
+          <span>· {article.reading_time_minutes ?? 3} min read</span>
+        </div>
       </div>
     </Link>
   );
 }
 
-function ArticleHero({ article }: { article: A }) {
+function TopStoryItem({ article }: { article: A }) {
+  return (
+    <Link to="/article/$slug" params={{ slug: article.slug }} className="group grid grid-cols-[1fr_auto] gap-3 items-start">
+      <div className="min-w-0">
+        <div className="text-[10px] uppercase tracking-[0.22em] font-bold" style={{ color: ACCENT }}>{article.category}</div>
+        <h3 className="mt-1.5 font-semibold text-neutral-900 group-hover:text-neutral-700 leading-snug line-clamp-3"
+            style={{ fontFamily: "Fraunces, serif" }}>
+          {article.title}
+        </h3>
+        {article.published_at && <div className="mt-1.5 text-[11px] text-neutral-500">{timeAgo(article.published_at)}</div>}
+      </div>
+      {article.image_url && (
+        <img src={article.image_url} alt="" className="w-20 h-20 object-cover rounded shrink-0" loading="lazy" />
+      )}
+    </Link>
+  );
+}
+
+function EditorialCard({ article, size }: { article: A; size: "sm" | "md" | "lg" }) {
+  const titleClass =
+    size === "lg" ? "text-2xl md:text-3xl" :
+    size === "md" ? "text-xl" :
+    "text-lg";
+  const aspect = size === "lg" ? "aspect-[16/10]" : "aspect-[16/9]";
   return (
     <Link to="/article/$slug" params={{ slug: article.slug }} className="group block">
-      {article.image_url && <img src={article.image_url} alt="" className="w-full h-80 object-cover rounded-xl border border-white/10" loading="lazy" />}
-      <div className="mt-4">
-        <div className="text-xs uppercase tracking-widest text-red-400">{article.source_name ?? article.category}</div>
-        <h3 className="mt-2 text-2xl font-serif font-semibold group-hover:text-red-300" style={{ fontFamily: "Fraunces, serif" }}>{article.title}</h3>
-        {article.description && <p className="mt-2 text-white/60 line-clamp-2">{article.description}</p>}
+      {article.image_url && (
+        <div className={`relative overflow-hidden rounded-md ${aspect} bg-neutral-100`}>
+          <img src={article.image_url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" loading="lazy" />
+        </div>
+      )}
+      <div className={size === "lg" ? "mt-4" : "mt-3"}>
+        <div className="text-[10px] uppercase tracking-[0.22em] font-bold" style={{ color: ACCENT }}>
+          {article.source_name ?? article.category}
+        </div>
+        <h3 className={`mt-2 ${titleClass} font-semibold tracking-tight text-neutral-900 group-hover:text-neutral-700 leading-snug line-clamp-3`}
+            style={{ fontFamily: "Fraunces, serif" }}>
+          {article.title}
+        </h3>
+        {size !== "sm" && article.description && (
+          <p className="mt-2 text-sm text-neutral-600 line-clamp-2">{article.description}</p>
+        )}
+        <div className="mt-2.5 text-[11px] text-neutral-500 flex items-center gap-2">
+          {article.published_at && <span>{timeAgo(article.published_at)}</span>}
+          <span>·</span>
+          <span>{article.reading_time_minutes ?? 3} min</span>
+        </div>
       </div>
     </Link>
   );
 }
 
-function RailItem({ article }: { article: A }) {
+function RankedItem({ rank, article }: { rank: number; article: A }) {
   return (
-    <Link to="/article/$slug" params={{ slug: article.slug }} className="group flex gap-3 pb-4 border-b border-white/10 last:border-0">
-      {article.image_url && <img src={article.image_url} alt="" className="w-24 h-20 object-cover rounded-lg border border-white/10" loading="lazy" />}
-      <div className="flex-1">
-        <div className="text-[10px] uppercase tracking-widest text-red-400">{article.category}</div>
-        <h4 className="text-sm font-semibold mt-1 group-hover:text-red-300 leading-snug">{article.title}</h4>
+    <Link to="/article/$slug" params={{ slug: article.slug }} className="group grid grid-cols-[auto_1fr] gap-4 items-start">
+      <span
+        className="text-4xl font-semibold leading-none tabular-nums select-none"
+        style={{ fontFamily: "Fraunces, serif", color: ACCENT }}
+      >
+        {String(rank).padStart(2, "0")}
+      </span>
+      <div className="min-w-0 border-b border-neutral-200 pb-5">
+        <div className="text-[10px] uppercase tracking-[0.22em] font-bold text-neutral-500">{article.category}</div>
+        <h4 className="mt-1.5 font-semibold text-neutral-900 group-hover:text-neutral-700 leading-snug line-clamp-2"
+            style={{ fontFamily: "Fraunces, serif" }}>
+          {article.title}
+        </h4>
       </div>
     </Link>
   );
 }
 
-function Card({ article }: { article: A }) {
+function FooterCol({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <Link to="/article/$slug" params={{ slug: article.slug }} className="group rounded-xl overflow-hidden border border-white/10 bg-white/5 hover:border-white/20 transition">
-      {article.image_url && <img src={article.image_url} alt="" className="w-full h-44 object-cover" loading="lazy" />}
-      <div className="p-4">
-        <div className="text-[10px] uppercase tracking-widest text-red-400">{article.source_name ?? article.category}</div>
-        <h3 className="mt-2 font-semibold leading-snug group-hover:text-red-300">{article.title}</h3>
-        {article.description && <p className="mt-2 text-sm text-white/60 line-clamp-3">{article.description}</p>}
-        <div className="mt-3 text-xs text-white/40">{article.reading_time_minutes ?? 3} min read</div>
-      </div>
-    </Link>
+    <div>
+      <div className="text-white/90 font-semibold mb-4 text-sm uppercase tracking-wider">{title}</div>
+      <ul className="space-y-2.5">{children}</ul>
+    </div>
   );
+}
+
+// ---------------- CATEGORY STRIPS ----------------
+// Lazy secondary sections rendered client-side per category.
+
+import { getSectionFeed } from "@/lib/news.functions";
+
+function CategoryStrips({ exclude }: { exclude: Set<string> }) {
+  const cats = SECTION_ORDER.filter((s) => !exclude.has(s)).slice(0, 6);
+  return (
+    <div className="mt-14 space-y-14">
+      {cats.map((c, idx) => (
+        <div key={c}>
+          <CategoryStrip section={c} />
+          {idx === 2 && (
+            <div className="mt-10">
+              <AdSlot size="billboard" slotId={`mid-strip-${idx}`} />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CategoryStrip({ section }: { section: SectionSlug }) {
+  const q = useQuery({
+    queryKey: ["home-strip", section],
+    queryFn: () => getSectionFeed({ data: { section, page: 0, pageSize: 4 } }),
+    staleTime: 5 * 60_000,
+  });
+  const rows = q.data?.rows ?? [];
+  if (q.isLoading) {
+    return (
+      <div>
+        <div className="border-b border-neutral-200 pb-4">
+          <SectionEyebrow>{SECTION_LABELS[section]}</SectionEyebrow>
+          <h2 className="mt-2 text-2xl md:text-3xl font-semibold tracking-tight" style={{ fontFamily: "Fraunces, serif" }}>{SECTION_LABELS[section]}</h2>
+        </div>
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+        </div>
+      </div>
+    );
+  }
+  if (rows.length === 0) return null;
+  return (
+    <section>
+      <SectionHeader eyebrow={section === "telangana" ? "Flagship" : "Section"} title={SECTION_LABELS[section]} viewAll={section} />
+      <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {rows.slice(0, 4).map((a) => <EditorialCard key={a.id} article={a as A} size="sm" />)}
+      </div>
+    </section>
+  );
+}
+
+function SkeletonCard() {
+  return (
+    <div className="animate-pulse">
+      <div className="aspect-[16/9] bg-neutral-100 rounded-md" />
+      <div className="mt-3 h-3 bg-neutral-100 rounded w-1/3" />
+      <div className="mt-2 h-4 bg-neutral-100 rounded w-full" />
+      <div className="mt-2 h-4 bg-neutral-100 rounded w-4/5" />
+    </div>
+  );
+}
+
+// ---------------- UTIL ----------------
+
+function timeAgo(iso: string | null): string {
+  if (!iso) return "";
+  const ms = Date.now() - new Date(iso).getTime();
+  const m = Math.round(ms / 60000);
+  if (m < 1) return "Just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.round(h / 24);
+  if (d < 7) return `${d}d ago`;
+  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
