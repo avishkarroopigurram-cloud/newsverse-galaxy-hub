@@ -185,20 +185,27 @@ function Home() {
 
         {breaking.data && breaking.data.length > 0 && (
           <div className="border-t border-neutral-200 bg-neutral-50">
-            <div className="max-w-[1400px] mx-auto flex items-center gap-3 px-4 md:px-6 py-2 overflow-hidden">
+            <div className="max-w-[1400px] mx-auto relative h-10 md:h-11 flex items-center px-4 md:px-6 overflow-hidden">
               <span
-                className="rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest shrink-0 text-white"
+                className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 z-20 rounded px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm"
                 style={{ backgroundColor: ACCENT }}
               >
                 Live
               </span>
-              <div className="flex gap-10 animate-[nv-scroll_75s_linear_infinite] whitespace-nowrap text-sm text-neutral-800">
-                {[...breaking.data, ...breaking.data].map((b, i) => (
-                  <Link key={`${b.id}-${i}`} to="/article/$slug" params={{ slug: b.slug }} className="hover:text-black">
-                    <span className="font-semibold" style={{ color: ACCENT }}>●</span>{" "}
-                    {b.title}
-                  </Link>
-                ))}
+              <div
+                aria-hidden
+                className="absolute left-0 top-0 h-full w-24 md:w-28 z-10 pointer-events-none"
+                style={{ background: "linear-gradient(to right, rgb(250 250 250) 60%, rgba(250,250,250,0))" }}
+              />
+              <div className="pl-20 md:pl-24 w-full overflow-hidden">
+                <div className="flex gap-10 animate-[nv-scroll_75s_linear_infinite] whitespace-nowrap text-sm text-neutral-800 will-change-transform">
+                  {[...breaking.data, ...breaking.data].map((b, i) => (
+                    <Link key={`${b.id}-${i}`} to="/article/$slug" params={{ slug: b.slug }} className="hover:text-black inline-flex items-center gap-2">
+                      <span className="font-semibold" style={{ color: ACCENT }}>●</span>
+                      <span>{b.title}</span>
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
