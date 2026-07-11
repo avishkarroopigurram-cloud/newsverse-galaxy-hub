@@ -3,6 +3,8 @@ import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query"
 import { useEffect, useState } from "react";
 import { getHomepageFeed, getBreaking, getOriginals } from "@/lib/news.functions";
 import { pickEditorialLead, sortByEditorialPriority } from "@/lib/editorial-priority";
+import { prettySourceName } from "@/lib/source-name";
+
 import { SECTION_ORDER, SECTION_LABELS, type SectionSlug } from "@/lib/newsdata.server";
 import { supabase } from "@/integrations/supabase/client";
 import { AdSlot, StickyMobileAd } from "@/components/AdSlot";
@@ -554,10 +556,11 @@ function Featured({ article }: { article: A }) {
           </p>
         )}
         <div className="mt-4 text-xs text-neutral-500 flex flex-wrap items-center gap-x-3 gap-y-1">
-          {article.source_name && <span className="font-medium text-neutral-700">{article.source_name}</span>}
+          {prettySourceName(article.source_name) && <span className="font-medium text-neutral-700">{prettySourceName(article.source_name)}</span>}
           {article.published_at && <span>· {timeAgo(article.published_at)}</span>}
           <span>· {article.reading_time_minutes ?? 3} min read</span>
         </div>
+
       </div>
     </Link>
   );
@@ -596,7 +599,8 @@ function EditorialCard({ article, size }: { article: A; size: "sm" | "md" | "lg"
       )}
       <div className={size === "lg" ? "mt-4" : "mt-3"}>
         <div className="text-[10px] uppercase tracking-[0.22em] font-bold" style={{ color: ACCENT }}>
-          {article.source_name ?? article.category}
+          {prettySourceName(article.source_name) ?? article.category}
+
         </div>
         <h3 className={`mt-2 ${titleClass} font-semibold tracking-tight text-neutral-900 group-hover:text-neutral-700 leading-snug line-clamp-3`}
             style={{ fontFamily: "Fraunces, serif" }}>

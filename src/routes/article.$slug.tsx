@@ -1,6 +1,8 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { getArticleBySlug } from "@/lib/news.functions";
+import { prettySourceName } from "@/lib/source-name";
+
 
 const articleQuery = (slug: string) =>
   queryOptions({
@@ -83,7 +85,7 @@ function ArticlePage() {
 
         <div className="mt-5 flex flex-wrap items-center gap-4 text-sm text-white/60">
           {a.author && <span>By {a.author}</span>}
-          {a.source_name && <span>· {a.source_name}</span>}
+          {prettySourceName(a.source_name) && <span>· {prettySourceName(a.source_name)}</span>}
           {a.published_at && <span>· {new Date(a.published_at).toLocaleString()}</span>}
           <span>· {a.reading_time_minutes} min read</span>
         </div>
@@ -116,9 +118,10 @@ function ArticlePage() {
 
         {a.url && (
           <a href={a.url} target="_blank" rel="noopener noreferrer" className="mt-6 inline-block text-red-400 underline">
-            Read original story at {a.source_name} →
+            Read original story{prettySourceName(a.source_name) ? ` at ${prettySourceName(a.source_name)}` : ""} →
           </a>
         )}
+
 
         {a.keywords && a.keywords.length > 0 && (
           <div className="mt-8 flex flex-wrap gap-2">
