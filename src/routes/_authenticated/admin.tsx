@@ -142,6 +142,10 @@ function AdminPage() {
             </div>
           </div>
 
+          <p className="text-xs text-white/50 mb-2">
+            Editorial priority: <span className="text-white/80">⭐ Pin</span> promotes a story to the homepage hero, overriding the automatic ranking.
+            Otherwise the homepage follows the newsroom priority order (Breaking → Government → Telangana → Hyderabad → India → World → … → Entertainment last).
+          </p>
           <div className="overflow-x-auto rounded-xl border border-white/10">
             <table className="w-full text-sm">
               <thead className="bg-white/5 text-left text-xs uppercase text-white/60">
@@ -149,7 +153,7 @@ function AdminPage() {
                   <th className="px-3 py-2">Title</th>
                   <th className="px-3 py-2">Section</th>
                   <th className="px-3 py-2">Status</th>
-                  <th className="px-3 py-2">Flags</th>
+                  <th className="px-3 py-2">Priority</th>
                   <th className="px-3 py-2">Actions</th>
                 </tr>
               </thead>
@@ -168,10 +172,10 @@ function AdminPage() {
                         <option value="rejected">rejected</option>
                       </select>
                     </td>
-                    <td className="px-3 py-2 space-x-1">
-                      <FlagBtn on={a.is_featured} label="⭐" onClick={() => updateMut.mutate({ id: a.id, is_featured: !a.is_featured })} />
-                      <FlagBtn on={a.is_breaking} label="🔥" onClick={() => updateMut.mutate({ id: a.id, is_breaking: !a.is_breaking })} />
-                      <FlagBtn on={a.is_editors_pick} label="✏️" onClick={() => updateMut.mutate({ id: a.id, is_editors_pick: !a.is_editors_pick })} />
+                    <td className="px-3 py-2 space-x-1 whitespace-nowrap">
+                      <FlagBtn on={a.is_featured} label="⭐ Pin" onClick={() => updateMut.mutate({ id: a.id, is_featured: !a.is_featured })} />
+                      <FlagBtn on={a.is_breaking} label="🔥 Break" onClick={() => updateMut.mutate({ id: a.id, is_breaking: !a.is_breaking })} />
+                      <FlagBtn on={a.is_editors_pick} label="✏️ Pick" onClick={() => updateMut.mutate({ id: a.id, is_editors_pick: !a.is_editors_pick })} />
                     </td>
                     <td className="px-3 py-2">
                       <button onClick={() => {
