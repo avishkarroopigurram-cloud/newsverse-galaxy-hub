@@ -10,33 +10,61 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicCronIngestNewsRouteImport } from './routes/api/public/cron/ingest-news'
+import { Route as ApiPublicCronIngestBreakingRouteImport } from './routes/api/public/cron/ingest-breaking'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCronIngestNewsRoute = ApiPublicCronIngestNewsRouteImport.update({
+  id: '/api/public/cron/ingest-news',
+  path: '/api/public/cron/ingest-news',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCronIngestBreakingRoute =
+  ApiPublicCronIngestBreakingRouteImport.update({
+    id: '/api/public/cron/ingest-breaking',
+    path: '/api/public/cron/ingest-breaking',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/public/cron/ingest-breaking': typeof ApiPublicCronIngestBreakingRoute
+  '/api/public/cron/ingest-news': typeof ApiPublicCronIngestNewsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/public/cron/ingest-breaking': typeof ApiPublicCronIngestBreakingRoute
+  '/api/public/cron/ingest-news': typeof ApiPublicCronIngestNewsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/public/cron/ingest-breaking': typeof ApiPublicCronIngestBreakingRoute
+  '/api/public/cron/ingest-news': typeof ApiPublicCronIngestNewsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/api/public/cron/ingest-breaking'
+    | '/api/public/cron/ingest-news'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/api/public/cron/ingest-breaking' | '/api/public/cron/ingest-news'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/public/cron/ingest-breaking'
+    | '/api/public/cron/ingest-news'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiPublicCronIngestBreakingRoute: typeof ApiPublicCronIngestBreakingRoute
+  ApiPublicCronIngestNewsRoute: typeof ApiPublicCronIngestNewsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +76,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/ingest-news': {
+      id: '/api/public/cron/ingest-news'
+      path: '/api/public/cron/ingest-news'
+      fullPath: '/api/public/cron/ingest-news'
+      preLoaderRoute: typeof ApiPublicCronIngestNewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/ingest-breaking': {
+      id: '/api/public/cron/ingest-breaking'
+      path: '/api/public/cron/ingest-breaking'
+      fullPath: '/api/public/cron/ingest-breaking'
+      preLoaderRoute: typeof ApiPublicCronIngestBreakingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiPublicCronIngestBreakingRoute: ApiPublicCronIngestBreakingRoute,
+  ApiPublicCronIngestNewsRoute: ApiPublicCronIngestNewsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

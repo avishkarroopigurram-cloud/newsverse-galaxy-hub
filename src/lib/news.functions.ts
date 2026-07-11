@@ -80,19 +80,21 @@ export const getSectionFeed = createServerFn({ method: "GET" })
     return { rows: rows ?? [], count: count ?? 0, hasMore: (rows?.length ?? 0) === data.pageSize };
   });
 
+const FULL_ARTICLE_COLS =
+  "id, slug, title, description, content, url, image_url, category, source_id, source_name, author, published_at, reading_time_minutes, is_breaking, is_featured, is_editors_pick, view_count, keywords, ai_summary, ai_takeaways, ai_meta_description, ai_categorized_as, country, language";
+
 export const getArticleBySlug = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ slug: z.string() }).parse(input))
   .handler(async ({ data }) => {
     const sb = serverPublicClient();
     const { data: article } = await sb
       .from("articles")
-      .select("*")
+      .select(FULL_ARTICLE_COLS)
       .eq("slug", data.slug)
       .eq("status", "approved")
       .maybeSingle();
-    if (!article) return { article: null, related: [] };
+    if (!article) return { article: null, related: [] as unknown[] };
 
-    // Related: same category, exclude current, latest 4
     const { data: related } = await sb
       .from("articles")
       .select(ARTICLE_COLS)
@@ -101,24 +103,8 @@ export const getArticleBySlug = createServerFn({ method: "GET" })
       .order("published_at", { ascending: false })
       .limit(4);
 
-    // Fire-and-forget view increment via admin (RPC not required for a simple update)
-    void incrementView(article.id);
-
     return { article, related: related ?? [] };
   });
-
-async function incrementView(id: string) {
-  try {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.rpc as unknown;
-    await supabaseAdmin
-      .from("articles")
-      .update({ view_count: (undefined as unknown as number) })
-      .eq("id", id);
-  } catch {
-    /* noop */
-  }
-}
 
 export const searchArticles = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) =>
