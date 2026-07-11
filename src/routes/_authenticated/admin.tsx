@@ -193,10 +193,11 @@ function AdminPage() {
             {(stats?.recentLogs ?? []).map((l) => (
               <div key={l.id} className="px-4 py-2 flex flex-wrap gap-3 text-sm">
                 <span className="text-white/50 w-40">{new Date(l.ran_at).toLocaleString()}</span>
-                <span className="w-32">{l.category ?? "—"}</span>
+                <span className="w-28">{l.category ?? "—"}</span>
+                <span className="w-20 text-white/70">{l.provider ?? "—"}</span>
                 <span className={l.status === "success" ? "text-emerald-400" : l.rate_limited ? "text-yellow-400" : "text-red-400"}>{l.status}</span>
                 <span className="text-white/60">+{l.inserted_count} · dup {l.duplicate_count}</span>
-                {l.error && <span className="text-red-400/80">{l.error}</span>}
+                {l.error && <span className="text-red-400/80 truncate max-w-xl">{l.error}</span>}
               </div>
             ))}
           </div>
