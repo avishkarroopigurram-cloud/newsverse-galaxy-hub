@@ -572,7 +572,31 @@ const css = `
   font-family:'Fraunces', serif; font-weight:600; font-size:23px; letter-spacing:-.01em;
   display:flex; align-items:center; gap:10px;
 }
-.nv-root .logo-img{ height:36px; width:auto; object-fit:contain; }
+.nv-root .logo-badge{
+  display:inline-flex; align-items:center; justify-content:center;
+  background:#FFFFFF; padding:10px 14px; border-radius:12px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 6px 20px -8px rgba(0,0,0,.55);
+}
+.nv-root .logo-img{ height:34px; width:auto; object-fit:contain; display:block; }
+.nv-root .section-sub{ color:var(--gray); font-size:14px; margin-top:10px; max-width:520px; line-height:1.55; }
+.nv-root .tg-section{ background: linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 100%); }
+.nv-root .tg-grid{ display:grid; grid-template-columns: 1.35fr .85fr; gap:36px; align-items:stretch; }
+.nv-root .tg-lead{ border:1px solid var(--line); background: var(--glass); display:flex; flex-direction:column; }
+.nv-root .tg-lead-media{ position:relative; height:420px; overflow:hidden; }
+.nv-root .tg-lead-media img{ width:100%; height:100%; object-fit:cover; transition: transform 1.2s cubic-bezier(.16,1,.3,1); }
+.nv-root .tg-lead:hover .tg-lead-media img{ transform: scale(1.045); }
+.nv-root .tg-lead-media .hero-tag{ position:absolute; top:20px; left:20px; margin:0; }
+.nv-root .tg-lead-body{ padding:28px 30px 32px; }
+.nv-root .tg-lead-title{ font-family:'Fraunces', serif; font-size:30px; font-weight:600; line-height:1.15; letter-spacing:-.01em; }
+.nv-root .tg-lead-dek{ color:var(--gray); font-size:14.5px; margin-top:14px; line-height:1.6; max-width:640px; }
+.nv-root .tg-rail{ display:flex; flex-direction:column; gap:22px; }
+.nv-root .tg-rail-item{ display:grid; grid-template-columns: 140px 1fr; gap:16px; padding-bottom:22px; border-bottom:1px solid var(--line); cursor:pointer; }
+.nv-root .tg-rail-item:last-child{ border-bottom:none; padding-bottom:0; }
+.nv-root .tg-rail-media{ height:100px; overflow:hidden; }
+.nv-root .tg-rail-media img{ width:100%; height:100%; object-fit:cover; transition: transform .5s ease; }
+.nv-root .tg-rail-item:hover .tg-rail-media img{ transform: scale(1.06); }
+.nv-root .tg-rail-title{ font-family:'Fraunces', serif; font-size:16px; font-weight:500; line-height:1.32; margin-top:2px; }
+.nv-root .tg-rail-item:hover .tg-rail-title{ color:var(--gold); }
 .nv-root .logo-text{ display:inline-flex; align-items:center; }
 .nv-root .logo .dot{ color:var(--blue); margin:0 1px; }
 .nv-root .navlinks{ display:flex; align-items:center; gap:26px; font-size:13.5px; font-weight:500; }
