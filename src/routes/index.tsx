@@ -227,6 +227,66 @@ function Index() {
           </div>
         </section>
 
+        <section className="tg-section">
+          <div className="wrap">
+            <div className="section-head reveal">
+              <div>
+                <span className="eyebrow">Flagship · Telangana</span>
+                <h2 className="section-title" style={{ marginTop: 8 }}>Telangana Today</h2>
+                <p className="section-sub">India's most trusted newsroom on Telangana — reported from the ground, verified before it moves.</p>
+              </div>
+              <a className="view-all" href="#">All Telangana coverage →</a>
+            </div>
+
+            <div className="tg-grid reveal">
+              <article className="tg-lead">
+                <div className="tg-lead-media">
+                  <img src={telanganaLead.img} alt={telanganaLead.title} />
+                  <span className="hero-tag">● {telanganaLead.cat}</span>
+                </div>
+                <div className="tg-lead-body">
+                  <h3 className="tg-lead-title">{telanganaLead.title}</h3>
+                  <p className="tg-lead-dek">{telanganaLead.dek}</p>
+                  <div className="hero-meta">
+                    <span className="mono">{telanganaLead.read} read</span><span>·</span>
+                    <span>{telanganaLead.byline}</span>
+                  </div>
+                </div>
+              </article>
+
+              <div className="tg-rail">
+                {telanganaStories.map((s, i) => (
+                  <article className="tg-rail-item" key={i}>
+                    <div className="tg-rail-media"><img src={s.img} alt={s.title} loading="lazy" /></div>
+                    <div>
+                      <span className="story-cat">{s.cat}</span>
+                      <div className="tg-rail-title">{s.title}</div>
+                      <div className="story-foot"><span>{s.read} read</span></div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div className="wrap">
+            <div className="section-head reveal">
+              <div>
+                <span className="eyebrow">Capital Desk</span>
+                <h2 className="section-title" style={{ marginTop: 8 }}>Hyderabad</h2>
+              </div>
+              <a className="view-all" href="#">More from Hyderabad →</a>
+            </div>
+            <div className="grid-3 reveal">
+              {hyderabad.map((t, i) => <StoryCard key={i} {...t} />)}
+            </div>
+          </div>
+        </section>
+
+
+
         <section>
           <div className="wrap">
             <div className="section-head reveal">
