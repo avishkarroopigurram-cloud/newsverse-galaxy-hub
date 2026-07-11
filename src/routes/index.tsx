@@ -213,7 +213,7 @@ function Home() {
                 style={{ background: "linear-gradient(to right, rgb(250 250 250) 60%, rgba(250,250,250,0))" }}
               />
               <div className="pl-20 md:pl-24 w-full overflow-hidden">
-                <div className="flex gap-10 animate-[nv-scroll_75s_linear_infinite] whitespace-nowrap text-sm text-neutral-800 will-change-transform">
+                <div className="flex gap-10 animate-[nv-scroll_30s_linear_infinite] whitespace-nowrap text-sm text-neutral-800 will-change-transform">
                   {[...breaking.data, ...breaking.data].map((b, i) => (
                     <Link key={`${b.id}-${i}`} to="/article/$slug" params={{ slug: b.slug }} className="hover:text-black inline-flex items-center gap-2">
                       <span className="font-semibold" style={{ color: ACCENT }}>●</span>
@@ -228,7 +228,7 @@ function Home() {
       </header>
 
       <style>{`
-        @keyframes nv-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        @keyframes nv-scroll { from { transform: translate3d(0,0,0); } to { transform: translate3d(-50%,0,0); } }
         @keyframes nv-fadeup { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
         .nv-fadeup { animation: nv-fadeup .6s ease both; }
       `}</style>
