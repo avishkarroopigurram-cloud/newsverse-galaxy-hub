@@ -46,6 +46,29 @@ export const getHomepageFeed = createServerFn({ method: "GET" }).handler(async (
   };
 });
 
+export const getOriginals = createServerFn({ method: "GET" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        page: z.number().int().min(0).default(0),
+        pageSize: z.number().int().min(1).max(24).default(6),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const sb = serverPublicClient();
+    const from = data.page * data.pageSize;
+    const to = from + data.pageSize - 1;
+    const { data: rows, count } = await sb
+      .from("articles")
+      .select(ARTICLE_COLS, { count: "exact" })
+      .eq("is_original", true)
+      .eq("status", "approved")
+      .order("published_at", { ascending: false })
+      .range(from, to);
+    return { rows: rows ?? [], count: count ?? 0, hasMore: (rows?.length ?? 0) === data.pageSize };
+  });
+
 export const getBreaking = createServerFn({ method: "GET" }).handler(async () => {
   const sb = serverPublicClient();
   const { data } = await sb

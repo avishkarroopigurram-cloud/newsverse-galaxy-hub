@@ -69,6 +69,7 @@ export type Database = {
           is_breaking: boolean
           is_editors_pick: boolean
           is_featured: boolean
+          is_original: boolean
           keywords: string[] | null
           language: string | null
           provider: string
@@ -102,6 +103,7 @@ export type Database = {
           is_breaking?: boolean
           is_editors_pick?: boolean
           is_featured?: boolean
+          is_original?: boolean
           keywords?: string[] | null
           language?: string | null
           provider?: string
@@ -135,6 +137,7 @@ export type Database = {
           is_breaking?: boolean
           is_editors_pick?: boolean
           is_featured?: boolean
+          is_original?: boolean
           keywords?: string[] | null
           language?: string | null
           provider?: string

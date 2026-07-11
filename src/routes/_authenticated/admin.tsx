@@ -48,7 +48,7 @@ function AdminPage() {
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ["admin-stats"] }); void qc.invalidateQueries({ queryKey: ["admin-articles"] }); },
   });
   const updateMut = useMutation({
-    mutationFn: (v: { id: string; title?: string; status?: "approved" | "pending" | "rejected"; is_featured?: boolean; is_breaking?: boolean; is_editors_pick?: boolean }) => updateArticle({ data: v }),
+    mutationFn: (v: { id: string; title?: string; status?: "approved" | "pending" | "rejected"; is_featured?: boolean; is_breaking?: boolean; is_editors_pick?: boolean; is_original?: boolean }) => updateArticle({ data: v }),
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ["admin-articles"] }); },
   });
   const dedupeMut = useMutation({
@@ -145,6 +145,8 @@ function AdminPage() {
           <p className="text-xs text-white/50 mb-2">
             Editorial priority: <span className="text-white/80">⭐ Pin</span> promotes a story to the homepage hero, overriding the automatic ranking.
             Otherwise the homepage follows the newsroom priority order (Breaking → Government → Telangana → Hyderabad → India → World → … → Entertainment last).
+            <br />
+            <span className="text-white/80">📰 Original</span> publishes the story under NewsVerse Originals — in-house editorial content excluded from external provider sync.
           </p>
           <div className="overflow-x-auto rounded-xl border border-white/10">
             <table className="w-full text-sm">
@@ -176,6 +178,7 @@ function AdminPage() {
                       <FlagBtn on={a.is_featured} label="⭐ Pin" onClick={() => updateMut.mutate({ id: a.id, is_featured: !a.is_featured })} />
                       <FlagBtn on={a.is_breaking} label="🔥 Break" onClick={() => updateMut.mutate({ id: a.id, is_breaking: !a.is_breaking })} />
                       <FlagBtn on={a.is_editors_pick} label="✏️ Pick" onClick={() => updateMut.mutate({ id: a.id, is_editors_pick: !a.is_editors_pick })} />
+                      <FlagBtn on={a.is_original ?? false} label="📰 Original" onClick={() => updateMut.mutate({ id: a.id, is_original: !a.is_original })} />
                     </td>
                     <td className="px-3 py-2">
                       <button onClick={() => {
