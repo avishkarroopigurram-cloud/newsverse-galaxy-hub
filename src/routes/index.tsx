@@ -51,8 +51,29 @@ const dash = [
   { label: "USD / INR", value: "₹84.91", chg: "-0.08% today", up: false },
 ];
 
-const topics = ["India","World","Politics","Business","Technology","Artificial Intelligence","Startups","Science","Space","Health","Education","Sports","Entertainment","Opinion","Fact Check","Podcasts","Videos","Live Blogs","Election Center","Weather"];
-const missionTopics = ["Breaking News","Politics","Business","Technology","AI","Startups","Education","Health","Sports","Entertainment","Investigative Journalism","Fact Checking","Opinion & Analysis"];
+const topics = ["Telangana","Hyderabad","India","World","Business","Technology","Artificial Intelligence","Markets","Politics","Sports","Entertainment","Health","Weather","Fact Check","Videos","Podcasts","Opinion","Startups","Science","Education"];
+const missionTopics = ["Breaking News","Telangana","Hyderabad","Politics","Business","Technology","AI","Startups","Education","Health","Sports","Entertainment","Investigative Journalism","Fact Checking","Opinion & Analysis"];
+
+const telanganaLead = {
+  cat: "Telangana · Flagship",
+  title: "Hyderabad's ORR to Regional Ring Road: inside Telangana's ₹36,000 crore mobility blueprint",
+  dek: "An exclusive NewsVerse investigation on how the state's new mobility corridor could reshape land economics from Sangareddy to Yadadri — and who stands to gain first.",
+  img: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1400&q=80",
+  read: "9 min",
+  byline: "By NewsVerse Telangana Bureau",
+};
+
+const telanganaStories = [
+  { cat: "Telangana", title: "Kaleshwaram audit report: what the CAG actually flagged, line by line", img: img("photo-1509316975850-ff9c5deb0cd9"), read: "7 min" },
+  { cat: "Telangana", title: "Warangal's textile cluster is quietly becoming India's next apparel export hub", img: img("photo-1441986300917-64674bd600d8"), read: "5 min" },
+  { cat: "Telangana", title: "Inside the KTR–Revanth political recalibration ahead of the 2028 cycle", img: img("photo-1529107386315-e1a2ed48a620"), read: "6 min" },
+];
+
+const hyderabad = [
+  { cat: "Hyderabad", title: "Metro Phase-2 alignment finalized: 5 corridors, 76 new stations", dek: "HMRL will move to tendering by Q2, with early works planned along the Old City corridor.", img: img("photo-1587474260584-136574528ed5"), read: "5 min", comments: 64 },
+  { cat: "Hyderabad", title: "Genome Valley's next act: cell therapy manufacturing at commercial scale", dek: "Three biotech majors have signed 15-year leases as Telangana's life-sciences bet matures.", img: img("photo-1581091226825-a6a2a5aee158"), read: "6 min", comments: 41 },
+  { cat: "Hyderabad", title: "Charminar restoration enters final phase after 3-year conservation study", dek: "ASI confirms structural interventions will preserve the 1591 monument for another century.", img: img("photo-1524492412937-b28074a5d7da"), read: "4 min", comments: 28 },
+];
 
 function Icon({ d, extra }: { d: string; extra?: string }) {
   return (
