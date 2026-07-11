@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { getHomepageFeed, getBreaking } from "@/lib/news.functions";
+import { pickEditorialLead, sortByEditorialPriority } from "@/lib/editorial-priority";
 import { SECTION_ORDER, SECTION_LABELS, type SectionSlug } from "@/lib/newsdata.server";
 import { supabase } from "@/integrations/supabase/client";
 import { AdSlot, StickyMobileAd } from "@/components/AdSlot";
