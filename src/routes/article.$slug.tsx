@@ -85,7 +85,7 @@ function ArticlePage() {
 
         <div className="mt-5 flex flex-wrap items-center gap-4 text-sm text-white/60">
           {a.author && <span>By {a.author}</span>}
-          {a.source_name && <span>· {a.source_name}</span>}
+          {prettySourceName(a.source_name) && <span>· {prettySourceName(a.source_name)}</span>}
           {a.published_at && <span>· {new Date(a.published_at).toLocaleString()}</span>}
           <span>· {a.reading_time_minutes} min read</span>
         </div>
