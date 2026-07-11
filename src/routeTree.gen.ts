@@ -9,14 +9,49 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SectionSlugRouteImport } from './routes/section.$slug'
+import { Route as ArticleSlugRouteImport } from './routes/article.$slug'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as ApiPublicCronIngestNewsRouteImport } from './routes/api/public/cron/ingest-news'
 import { Route as ApiPublicCronIngestBreakingRouteImport } from './routes/api/public/cron/ingest-breaking'
 
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SectionSlugRoute = SectionSlugRouteImport.update({
+  id: '/section/$slug',
+  path: '/section/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArticleSlugRoute = ArticleSlugRouteImport.update({
+  id: '/article/$slug',
+  path: '/article/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const ApiPublicCronIngestNewsRoute = ApiPublicCronIngestNewsRouteImport.update({
   id: '/api/public/cron/ingest-news',
@@ -32,17 +67,33 @@ const ApiPublicCronIngestBreakingRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/search': typeof SearchRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/article/$slug': typeof ArticleSlugRoute
+  '/section/$slug': typeof SectionSlugRoute
   '/api/public/cron/ingest-breaking': typeof ApiPublicCronIngestBreakingRoute
   '/api/public/cron/ingest-news': typeof ApiPublicCronIngestNewsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/search': typeof SearchRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/article/$slug': typeof ArticleSlugRoute
+  '/section/$slug': typeof SectionSlugRoute
   '/api/public/cron/ingest-breaking': typeof ApiPublicCronIngestBreakingRoute
   '/api/public/cron/ingest-news': typeof ApiPublicCronIngestNewsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/search': typeof SearchRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/article/$slug': typeof ArticleSlugRoute
+  '/section/$slug': typeof SectionSlugRoute
   '/api/public/cron/ingest-breaking': typeof ApiPublicCronIngestBreakingRoute
   '/api/public/cron/ingest-news': typeof ApiPublicCronIngestNewsRoute
 }
@@ -50,31 +101,97 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
+    | '/search'
+    | '/admin'
+    | '/article/$slug'
+    | '/section/$slug'
     | '/api/public/cron/ingest-breaking'
     | '/api/public/cron/ingest-news'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/public/cron/ingest-breaking' | '/api/public/cron/ingest-news'
+  to:
+    | '/'
+    | '/auth'
+    | '/search'
+    | '/admin'
+    | '/article/$slug'
+    | '/section/$slug'
+    | '/api/public/cron/ingest-breaking'
+    | '/api/public/cron/ingest-news'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/search'
+    | '/_authenticated/admin'
+    | '/article/$slug'
+    | '/section/$slug'
     | '/api/public/cron/ingest-breaking'
     | '/api/public/cron/ingest-news'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  SearchRoute: typeof SearchRoute
+  ArticleSlugRoute: typeof ArticleSlugRoute
+  SectionSlugRoute: typeof SectionSlugRoute
   ApiPublicCronIngestBreakingRoute: typeof ApiPublicCronIngestBreakingRoute
   ApiPublicCronIngestNewsRoute: typeof ApiPublicCronIngestNewsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/section/$slug': {
+      id: '/section/$slug'
+      path: '/section/$slug'
+      fullPath: '/section/$slug'
+      preLoaderRoute: typeof SectionSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/article/$slug': {
+      id: '/article/$slug'
+      path: '/article/$slug'
+      fullPath: '/article/$slug'
+      preLoaderRoute: typeof ArticleSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/public/cron/ingest-news': {
       id: '/api/public/cron/ingest-news'
@@ -93,8 +210,24 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  SearchRoute: SearchRoute,
+  ArticleSlugRoute: ArticleSlugRoute,
+  SectionSlugRoute: SectionSlugRoute,
   ApiPublicCronIngestBreakingRoute: ApiPublicCronIngestBreakingRoute,
   ApiPublicCronIngestNewsRoute: ApiPublicCronIngestNewsRoute,
 }

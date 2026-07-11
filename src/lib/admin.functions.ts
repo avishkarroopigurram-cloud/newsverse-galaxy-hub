@@ -81,9 +81,9 @@ export const listAdminArticles = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) =>
     z
       .object({
-        status: z.enum(["all", "approved", "pending", "rejected"]).default("all"),
-        page: z.number().int().min(0).default(0),
-        pageSize: z.number().int().min(1).max(50).default(20),
+        status: z.enum(["all", "approved", "pending", "rejected"]),
+        page: z.number().int().min(0),
+        pageSize: z.number().int().min(1).max(50),
       })
       .parse(input),
   )

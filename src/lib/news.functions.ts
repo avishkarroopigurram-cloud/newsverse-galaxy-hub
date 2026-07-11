@@ -83,9 +83,54 @@ export const getSectionFeed = createServerFn({ method: "GET" })
 const FULL_ARTICLE_COLS =
   "id, slug, title, description, content, url, image_url, category, source_id, source_name, author, published_at, reading_time_minutes, is_breaking, is_featured, is_editors_pick, view_count, keywords, ai_summary, ai_takeaways, ai_meta_description, ai_categorized_as, country, language";
 
+export type ArticleFull = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  content: string | null;
+  url: string | null;
+  image_url: string | null;
+  category: string;
+  source_id: string | null;
+  source_name: string | null;
+  author: string | null;
+  published_at: string | null;
+  reading_time_minutes: number | null;
+  is_breaking: boolean;
+  is_featured: boolean;
+  is_editors_pick: boolean;
+  view_count: number;
+  keywords: string[] | null;
+  ai_summary: string | null;
+  ai_takeaways: string[] | null;
+  ai_meta_description: string | null;
+  ai_categorized_as: string | null;
+  country: string | null;
+  language: string | null;
+};
+
+export type ArticleCard = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  category: string;
+  source_name: string | null;
+  author: string | null;
+  published_at: string | null;
+  reading_time_minutes: number | null;
+  is_breaking: boolean;
+  is_featured: boolean;
+  is_editors_pick: boolean;
+  view_count: number;
+  keywords: string[] | null;
+};
+
 export const getArticleBySlug = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ slug: z.string() }).parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<{ article: ArticleFull | null; related: ArticleCard[] }> => {
     const sb = serverPublicClient();
     const { data: article } = await sb
       .from("articles")
@@ -93,17 +138,17 @@ export const getArticleBySlug = createServerFn({ method: "GET" })
       .eq("slug", data.slug)
       .eq("status", "approved")
       .maybeSingle();
-    if (!article) return { article: null, related: [] as Array<{ id: string }> };
+    if (!article) return { article: null, related: [] };
 
     const { data: related } = await sb
       .from("articles")
       .select(ARTICLE_COLS)
-      .eq("category", article.category)
-      .neq("id", article.id)
+      .eq("category", (article as { category: string }).category)
+      .neq("id", (article as { id: string }).id)
       .order("published_at", { ascending: false })
       .limit(4);
 
-    return { article, related: related ?? [] };
+    return { article: article as ArticleFull, related: (related ?? []) as ArticleCard[] };
   });
 
 export const searchArticles = createServerFn({ method: "GET" })
