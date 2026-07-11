@@ -21,6 +21,7 @@ export type Database = {
           error: string | null
           id: string
           inserted_count: number
+          provider: string | null
           ran_at: string
           rate_limited: boolean
           status: string
@@ -31,6 +32,7 @@ export type Database = {
           error?: string | null
           id?: string
           inserted_count?: number
+          provider?: string | null
           ran_at?: string
           rate_limited?: boolean
           status?: string
@@ -41,6 +43,7 @@ export type Database = {
           error?: string | null
           id?: string
           inserted_count?: number
+          provider?: string | null
           ran_at?: string
           rate_limited?: boolean
           status?: string
@@ -68,6 +71,7 @@ export type Database = {
           is_featured: boolean
           keywords: string[] | null
           language: string | null
+          provider: string
           published_at: string | null
           reading_time_minutes: number | null
           search_vector: unknown
@@ -100,6 +104,7 @@ export type Database = {
           is_featured?: boolean
           keywords?: string[] | null
           language?: string | null
+          provider?: string
           published_at?: string | null
           reading_time_minutes?: number | null
           search_vector?: unknown
@@ -132,6 +137,7 @@ export type Database = {
           is_featured?: boolean
           keywords?: string[] | null
           language?: string | null
+          provider?: string
           published_at?: string | null
           reading_time_minutes?: number | null
           search_vector?: unknown
