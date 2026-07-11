@@ -529,6 +529,7 @@ function Featured({ article }: { article: A }) {
             alt=""
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
             loading="eager"
+            referrerPolicy="no-referrer"
           />
           {article.is_breaking && (
             <span
