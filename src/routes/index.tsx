@@ -649,6 +649,173 @@ function FooterCol({ title, children }: { title: string; children: React.ReactNo
 
 import { getSectionFeed } from "@/lib/news.functions";
 
+function NewsverseOriginals() {
+  const [page, setPage] = useState(0);
+  const pageSize = 6;
+  const q = useQuery({
+    queryKey: ["nv-originals", page],
+    queryFn: () => getOriginals({ data: { page, pageSize } }),
+    staleTime: 60_000,
+  });
+  const rows = (q.data?.rows ?? []) as A[];
+  if (!q.isLoading && rows.length === 0 && page === 0) return null;
+
+  const [lead, ...rest] = rows;
+  const shareUrl = (slug: string) =>
+    encodeURIComponent(`https://newsverse.today/article/${slug}`);
+
+  return (
+    <section className="mt-14 relative">
+      <div aria-hidden className="absolute -left-4 md:-left-6 top-0 bottom-0 w-1" style={{ backgroundColor: ACCENT }} />
+      <div className="flex items-end justify-between gap-4 border-b border-neutral-200 pb-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-3">
+            <span className="h-[2px] w-8" style={{ backgroundColor: ACCENT }} />
+            <span className="text-[11px] uppercase tracking-[0.25em] font-bold" style={{ color: ACCENT }}>NewsVerse Originals</span>
+            <span className="rounded-sm px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-white" style={{ backgroundColor: ACCENT }}>Exclusive</span>
+          </div>
+          <h2 className="mt-2 text-3xl md:text-4xl font-semibold tracking-tight text-neutral-900" style={{ fontFamily: "Fraunces, serif" }}>
+            NewsVerse Originals
+          </h2>
+          <p className="mt-1 text-sm text-neutral-500">Exclusive reporting from the NewsVerse Editorial Team.</p>
+        </div>
+      </div>
+
+      {q.isLoading ? (
+        <div className="mt-8 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+          <SkeletonCard />
+          <div className="grid gap-6">
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
+            {lead && <OriginalLead article={lead} shareUrl={shareUrl(lead.slug)} />}
+            <div className="grid gap-6 content-start">
+              {rest.slice(0, 3).map((a) => (
+                <OriginalCard key={a.id} article={a} />
+              ))}
+            </div>
+          </div>
+          {rest.length > 3 && (
+            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {rest.slice(3).map((a) => (
+                <OriginalCard key={a.id} article={a} compact />
+              ))}
+            </div>
+          )}
+          <div className="mt-8 flex items-center justify-between text-sm">
+            <div className="text-neutral-500">
+              Page {page + 1}{q.data?.count ? ` · ${q.data.count} originals` : ""}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0}
+                className="rounded-md border border-neutral-300 px-3 py-1.5 hover:bg-neutral-100 disabled:opacity-40"
+              >
+                ← Previous
+              </button>
+              <button
+                onClick={() => setPage((p) => p + 1)}
+                disabled={!q.data?.hasMore}
+                className="rounded-md border border-neutral-300 px-3 py-1.5 hover:bg-neutral-100 disabled:opacity-40"
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+function OriginalBadge() {
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-white"
+      style={{ backgroundColor: ACCENT }}
+    >
+      <span className="h-1 w-1 rounded-full bg-white" />
+      Original
+    </span>
+  );
+}
+
+function OriginalLead({ article, shareUrl }: { article: A; shareUrl: string }) {
+  return (
+    <article className="group">
+      <Link to="/article/$slug" params={{ slug: article.slug }} className="block">
+        {article.image_url && (
+          <div className="relative overflow-hidden rounded-md aspect-[16/10] bg-neutral-100">
+            <img src={article.image_url} alt="" loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
+            <span className="absolute top-4 left-4"><OriginalBadge /></span>
+          </div>
+        )}
+      </Link>
+      <div className="mt-5">
+        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] font-bold" style={{ color: ACCENT }}>
+          <span>{article.category}</span>
+        </div>
+        <Link to="/article/$slug" params={{ slug: article.slug }}>
+          <h3 className="mt-2 text-2xl md:text-3xl font-semibold tracking-tight text-neutral-900 group-hover:text-neutral-700 leading-snug" style={{ fontFamily: "Fraunces, serif" }}>
+            {article.title}
+          </h3>
+        </Link>
+        {article.description && (
+          <p className="mt-3 text-neutral-600 line-clamp-3">{article.description}</p>
+        )}
+        <div className="mt-3 text-xs text-neutral-500 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="font-medium text-neutral-800">{article.author ?? "NewsVerse Editorial Team"}</span>
+          {article.published_at && <span>· {new Date(article.published_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>}
+          <span>· {article.reading_time_minutes ?? 4} min read</span>
+        </div>
+        <ShareRow shareUrl={shareUrl} title={article.title} />
+      </div>
+    </article>
+  );
+}
+
+function OriginalCard({ article, compact }: { article: A; compact?: boolean }) {
+  return (
+    <Link to="/article/$slug" params={{ slug: article.slug }} className="group grid gap-3">
+      {article.image_url && (
+        <div className={`relative overflow-hidden rounded-md ${compact ? "aspect-[16/10]" : "aspect-[16/9]"} bg-neutral-100`}>
+          <img src={article.image_url} alt="" loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+          <span className="absolute top-3 left-3"><OriginalBadge /></span>
+        </div>
+      )}
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.22em] font-bold" style={{ color: ACCENT }}>{article.category}</div>
+        <h4 className="mt-1.5 text-lg font-semibold tracking-tight text-neutral-900 group-hover:text-neutral-700 leading-snug line-clamp-3" style={{ fontFamily: "Fraunces, serif" }}>
+          {article.title}
+        </h4>
+        <div className="mt-2 text-[11px] text-neutral-500 flex items-center gap-2">
+          <span className="font-medium text-neutral-700">{article.author ?? "NewsVerse Editorial Team"}</span>
+          {article.published_at && <span>· {timeAgo(article.published_at)}</span>}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function ShareRow({ shareUrl, title }: { shareUrl: string; title: string }) {
+  const encTitle = encodeURIComponent(title);
+  return (
+    <div className="mt-4 flex items-center gap-2 text-xs text-neutral-500">
+      <span className="uppercase tracking-widest text-[10px]">Share</span>
+      <a target="_blank" rel="noopener noreferrer" href={`https://twitter.com/intent/tweet?url=${shareUrl}&text=${encTitle}`} className="rounded-full border border-neutral-300 px-2.5 py-1 hover:bg-neutral-100">Twitter</a>
+      <a target="_blank" rel="noopener noreferrer" href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`} className="rounded-full border border-neutral-300 px-2.5 py-1 hover:bg-neutral-100">Facebook</a>
+      <a target="_blank" rel="noopener noreferrer" href={`https://api.whatsapp.com/send?text=${encTitle}%20${shareUrl}`} className="rounded-full border border-neutral-300 px-2.5 py-1 hover:bg-neutral-100">WhatsApp</a>
+      <a target="_blank" rel="noopener noreferrer" href={`https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`} className="rounded-full border border-neutral-300 px-2.5 py-1 hover:bg-neutral-100">LinkedIn</a>
+    </div>
+  );
+}
+
+
 function CategoryStrips({ exclude }: { exclude: Set<string> }) {
   const cats = SECTION_ORDER.filter((s) => !exclude.has(s)).slice(0, 6);
   return (
