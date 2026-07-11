@@ -67,7 +67,7 @@ function Home() {
           <div className="ml-auto flex items-center gap-3">
             <Link to="/search" className="text-sm text-white/70 hover:text-white">Search</Link>
             {session ? (
-              <Link to="/_authenticated/admin" className="text-sm rounded-md border border-white/15 px-3 py-1.5 hover:bg-white/5">Admin</Link>
+              <Link to="/admin" className="text-sm rounded-md border border-white/15 px-3 py-1.5 hover:bg-white/5">Admin</Link>
             ) : (
               <Link to="/auth" className="text-sm rounded-md bg-red-600 hover:bg-red-500 px-3 py-1.5">Sign in</Link>
             )}
