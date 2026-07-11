@@ -804,6 +804,9 @@ const css = `
   .nv-root .founder-grid{ grid-template-columns:1fr; }
   .nv-root .avatar-plaque{ position:static; max-width:320px; }
   .nv-root .founder-cols{ grid-template-columns:1fr; }
+  .nv-root .tg-grid{ grid-template-columns:1fr; }
+  .nv-root .tg-lead-media{ height:340px; }
+  .nv-root .tg-lead-title{ font-size:24px; }
 }
 @media (max-width: 640px){
   .nv-root .grid-3{ grid-template-columns:1fr; }
@@ -815,7 +818,11 @@ const css = `
   .nv-root .news-form{ flex-direction:column; }
   .nv-root .navactions .btn-ghost{ display:none; }
   .nv-root .logo-text{ display:none; }
+  .nv-root .logo-badge{ padding:8px 10px; }
+  .nv-root .logo-img{ height:28px; }
   .nv-root .navbar{ height:64px; }
+  .nv-root .tg-rail-item{ grid-template-columns: 110px 1fr; }
+  .nv-root .tg-rail-media{ height:80px; }
 }
 @media (prefers-reduced-motion: reduce){
   .nv-root *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
