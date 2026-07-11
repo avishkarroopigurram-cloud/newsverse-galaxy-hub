@@ -51,8 +51,29 @@ const dash = [
   { label: "USD / INR", value: "₹84.91", chg: "-0.08% today", up: false },
 ];
 
-const topics = ["India","World","Politics","Business","Technology","Artificial Intelligence","Startups","Science","Space","Health","Education","Sports","Entertainment","Opinion","Fact Check","Podcasts","Videos","Live Blogs","Election Center","Weather"];
-const missionTopics = ["Breaking News","Politics","Business","Technology","AI","Startups","Education","Health","Sports","Entertainment","Investigative Journalism","Fact Checking","Opinion & Analysis"];
+const topics = ["Telangana","Hyderabad","India","World","Business","Technology","Artificial Intelligence","Markets","Politics","Sports","Entertainment","Health","Weather","Fact Check","Videos","Podcasts","Opinion","Startups","Science","Education"];
+const missionTopics = ["Breaking News","Telangana","Hyderabad","Politics","Business","Technology","AI","Startups","Education","Health","Sports","Entertainment","Investigative Journalism","Fact Checking","Opinion & Analysis"];
+
+const telanganaLead = {
+  cat: "Telangana · Flagship",
+  title: "Hyderabad's ORR to Regional Ring Road: inside Telangana's ₹36,000 crore mobility blueprint",
+  dek: "An exclusive NewsVerse investigation on how the state's new mobility corridor could reshape land economics from Sangareddy to Yadadri — and who stands to gain first.",
+  img: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1400&q=80",
+  read: "9 min",
+  byline: "By NewsVerse Telangana Bureau",
+};
+
+const telanganaStories = [
+  { cat: "Telangana", title: "Kaleshwaram audit report: what the CAG actually flagged, line by line", img: img("photo-1509316975850-ff9c5deb0cd9"), read: "7 min" },
+  { cat: "Telangana", title: "Warangal's textile cluster is quietly becoming India's next apparel export hub", img: img("photo-1441986300917-64674bd600d8"), read: "5 min" },
+  { cat: "Telangana", title: "Inside the KTR–Revanth political recalibration ahead of the 2028 cycle", img: img("photo-1529107386315-e1a2ed48a620"), read: "6 min" },
+];
+
+const hyderabad = [
+  { cat: "Hyderabad", title: "Metro Phase-2 alignment finalized: 5 corridors, 76 new stations", dek: "HMRL will move to tendering by Q2, with early works planned along the Old City corridor.", img: img("photo-1587474260584-136574528ed5"), read: "5 min", comments: 64 },
+  { cat: "Hyderabad", title: "Genome Valley's next act: cell therapy manufacturing at commercial scale", dek: "Three biotech majors have signed 15-year leases as Telangana's life-sciences bet matures.", img: img("photo-1581091226825-a6a2a5aee158"), read: "6 min", comments: 41 },
+  { cat: "Hyderabad", title: "Charminar restoration enters final phase after 3-year conservation study", dek: "ASI confirms structural interventions will preserve the 1591 monument for another century.", img: img("photo-1524492412937-b28074a5d7da"), read: "4 min", comments: 28 },
+];
 
 function Icon({ d, extra }: { d: string; extra?: string }) {
   return (
@@ -98,7 +119,9 @@ function Index() {
       <header>
         <div className="wrap navbar">
           <a href="#" className="logo" aria-label="NewsVerse home">
-            <img src={logoAsset.url} alt="NewsVerse logo" className="logo-img" />
+            <span className="logo-badge">
+              <img src={logoAsset.url} alt="NewsVerse logo" className="logo-img" />
+            </span>
             <span className="logo-text">news<span className="dot">•</span>verse</span>
           </a>
           <nav className="navlinks">
@@ -203,6 +226,66 @@ function Index() {
             </div>
           </div>
         </section>
+
+        <section className="tg-section">
+          <div className="wrap">
+            <div className="section-head reveal">
+              <div>
+                <span className="eyebrow">Flagship · Telangana</span>
+                <h2 className="section-title" style={{ marginTop: 8 }}>Telangana Today</h2>
+                <p className="section-sub">India's most trusted newsroom on Telangana — reported from the ground, verified before it moves.</p>
+              </div>
+              <a className="view-all" href="#">All Telangana coverage →</a>
+            </div>
+
+            <div className="tg-grid reveal">
+              <article className="tg-lead">
+                <div className="tg-lead-media">
+                  <img src={telanganaLead.img} alt={telanganaLead.title} />
+                  <span className="hero-tag">● {telanganaLead.cat}</span>
+                </div>
+                <div className="tg-lead-body">
+                  <h3 className="tg-lead-title">{telanganaLead.title}</h3>
+                  <p className="tg-lead-dek">{telanganaLead.dek}</p>
+                  <div className="hero-meta">
+                    <span className="mono">{telanganaLead.read} read</span><span>·</span>
+                    <span>{telanganaLead.byline}</span>
+                  </div>
+                </div>
+              </article>
+
+              <div className="tg-rail">
+                {telanganaStories.map((s, i) => (
+                  <article className="tg-rail-item" key={i}>
+                    <div className="tg-rail-media"><img src={s.img} alt={s.title} loading="lazy" /></div>
+                    <div>
+                      <span className="story-cat">{s.cat}</span>
+                      <div className="tg-rail-title">{s.title}</div>
+                      <div className="story-foot"><span>{s.read} read</span></div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div className="wrap">
+            <div className="section-head reveal">
+              <div>
+                <span className="eyebrow">Capital Desk</span>
+                <h2 className="section-title" style={{ marginTop: 8 }}>Hyderabad</h2>
+              </div>
+              <a className="view-all" href="#">More from Hyderabad →</a>
+            </div>
+            <div className="grid-3 reveal">
+              {hyderabad.map((t, i) => <StoryCard key={i} {...t} />)}
+            </div>
+          </div>
+        </section>
+
+
 
         <section>
           <div className="wrap">
@@ -311,7 +394,7 @@ function Index() {
                 <div className="avatar-mono">MR</div>
                 <div className="avatar-name">Dr. Mattepally Rajanikanth</div>
                 <div className="avatar-role">Founder &amp; Editor-in-Chief, NewsVerse</div>
-                <div className="avatar-org">THE SOUTH INDIA TIMES</div>
+                
                 <div className="avatar-divider" />
                 <div className="avatar-award">
                   <b>Bharatiya Padma Bhushan Samman 2026–27</b><br />
@@ -402,7 +485,7 @@ function Index() {
           <div className="foot-grid">
             <div className="foot-col">
               <div className="logo" style={{ marginBottom: 16 }}>
-                <img src={logoAsset.url} alt="NewsVerse" className="logo-img" />
+                <span className="logo-badge"><img src={logoAsset.url} alt="NewsVerse" className="logo-img" /></span>
                 <span className="logo-text">news<span className="dot">•</span>verse</span>
               </div>
               <p style={{ color: "var(--gray)", fontSize: 13, lineHeight: 1.6, maxWidth: 220 }}>
@@ -489,7 +572,31 @@ const css = `
   font-family:'Fraunces', serif; font-weight:600; font-size:23px; letter-spacing:-.01em;
   display:flex; align-items:center; gap:10px;
 }
-.nv-root .logo-img{ height:36px; width:auto; object-fit:contain; }
+.nv-root .logo-badge{
+  display:inline-flex; align-items:center; justify-content:center;
+  background:#FFFFFF; padding:10px 14px; border-radius:12px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 6px 20px -8px rgba(0,0,0,.55);
+}
+.nv-root .logo-img{ height:34px; width:auto; object-fit:contain; display:block; }
+.nv-root .section-sub{ color:var(--gray); font-size:14px; margin-top:10px; max-width:520px; line-height:1.55; }
+.nv-root .tg-section{ background: linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 100%); }
+.nv-root .tg-grid{ display:grid; grid-template-columns: 1.35fr .85fr; gap:36px; align-items:stretch; }
+.nv-root .tg-lead{ border:1px solid var(--line); background: var(--glass); display:flex; flex-direction:column; }
+.nv-root .tg-lead-media{ position:relative; height:420px; overflow:hidden; }
+.nv-root .tg-lead-media img{ width:100%; height:100%; object-fit:cover; transition: transform 1.2s cubic-bezier(.16,1,.3,1); }
+.nv-root .tg-lead:hover .tg-lead-media img{ transform: scale(1.045); }
+.nv-root .tg-lead-media .hero-tag{ position:absolute; top:20px; left:20px; margin:0; }
+.nv-root .tg-lead-body{ padding:28px 30px 32px; }
+.nv-root .tg-lead-title{ font-family:'Fraunces', serif; font-size:30px; font-weight:600; line-height:1.15; letter-spacing:-.01em; }
+.nv-root .tg-lead-dek{ color:var(--gray); font-size:14.5px; margin-top:14px; line-height:1.6; max-width:640px; }
+.nv-root .tg-rail{ display:flex; flex-direction:column; gap:22px; }
+.nv-root .tg-rail-item{ display:grid; grid-template-columns: 140px 1fr; gap:16px; padding-bottom:22px; border-bottom:1px solid var(--line); cursor:pointer; }
+.nv-root .tg-rail-item:last-child{ border-bottom:none; padding-bottom:0; }
+.nv-root .tg-rail-media{ height:100px; overflow:hidden; }
+.nv-root .tg-rail-media img{ width:100%; height:100%; object-fit:cover; transition: transform .5s ease; }
+.nv-root .tg-rail-item:hover .tg-rail-media img{ transform: scale(1.06); }
+.nv-root .tg-rail-title{ font-family:'Fraunces', serif; font-size:16px; font-weight:500; line-height:1.32; margin-top:2px; }
+.nv-root .tg-rail-item:hover .tg-rail-title{ color:var(--gold); }
 .nv-root .logo-text{ display:inline-flex; align-items:center; }
 .nv-root .logo .dot{ color:var(--blue); margin:0 1px; }
 .nv-root .navlinks{ display:flex; align-items:center; gap:26px; font-size:13.5px; font-weight:500; }
@@ -697,6 +804,9 @@ const css = `
   .nv-root .founder-grid{ grid-template-columns:1fr; }
   .nv-root .avatar-plaque{ position:static; max-width:320px; }
   .nv-root .founder-cols{ grid-template-columns:1fr; }
+  .nv-root .tg-grid{ grid-template-columns:1fr; }
+  .nv-root .tg-lead-media{ height:340px; }
+  .nv-root .tg-lead-title{ font-size:24px; }
 }
 @media (max-width: 640px){
   .nv-root .grid-3{ grid-template-columns:1fr; }
@@ -708,7 +818,11 @@ const css = `
   .nv-root .news-form{ flex-direction:column; }
   .nv-root .navactions .btn-ghost{ display:none; }
   .nv-root .logo-text{ display:none; }
+  .nv-root .logo-badge{ padding:8px 10px; }
+  .nv-root .logo-img{ height:28px; }
   .nv-root .navbar{ height:64px; }
+  .nv-root .tg-rail-item{ grid-template-columns: 110px 1fr; }
+  .nv-root .tg-rail-media{ height:80px; }
 }
 @media (prefers-reduced-motion: reduce){
   .nv-root *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
