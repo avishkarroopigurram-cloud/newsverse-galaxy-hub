@@ -313,7 +313,7 @@ function Index() {
                 <div className="avatar-mono">MR</div>
                 <div className="avatar-name">Dr. Mattepally Rajanikanth</div>
                 <div className="avatar-role">Founder &amp; Editor-in-Chief, NewsVerse</div>
-                <div className="avatar-org">THE SOUTH INDIA TIMES</div>
+                
                 <div className="avatar-divider" />
                 <div className="avatar-award">
                   <b>Bharatiya Padma Bhushan Samman 2026–27</b><br />
