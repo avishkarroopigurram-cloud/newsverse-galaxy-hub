@@ -146,6 +146,7 @@ function RootComponent() {
   const router = useRouter();
 
   useEffect(() => {
+    initPwa();
     let mounted = true;
     import("@/integrations/supabase/client").then(({ supabase }) => {
       if (!mounted) return;
@@ -158,6 +159,7 @@ function RootComponent() {
     });
     return () => { mounted = false; };
   }, [router, queryClient]);
+
 
   return (
     <QueryClientProvider client={queryClient}>
