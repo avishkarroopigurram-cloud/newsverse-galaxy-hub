@@ -88,14 +88,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         property: "og:description",
         content:
-          "Independent, AI-augmented journalism. Breaking news, politics, business, technology, and analysis — verified by humans.",
+          "NewsVerse: independent, AI-augmented journalism from India for the world — breaking news, politics, business, technology, AI, and analysis.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "NewsVerse — Truth Beyond Headlines" },
+      { name: "twitter:description", content: "NewsVerse: independent, AI-augmented journalism from India for the world — breaking news, politics, business, technology, AI, and analysis." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/90747ba7-c169-4ef6-a925-df44ccb76a5b" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/90747ba7-c169-4ef6-a925-df44ccb76a5b" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
