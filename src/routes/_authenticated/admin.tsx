@@ -48,7 +48,7 @@ function AdminPage() {
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ["admin-stats"] }); void qc.invalidateQueries({ queryKey: ["admin-articles"] }); },
   });
   const updateMut = useMutation({
-    mutationFn: (v: Parameters<typeof updateArticle>[0]["data"]) => updateArticle({ data: v }),
+    mutationFn: (v: { id: string; title?: string; status?: "approved" | "pending" | "rejected"; is_featured?: boolean; is_breaking?: boolean; is_editors_pick?: boolean }) => updateArticle({ data: v }),
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ["admin-articles"] }); },
   });
   const dedupeMut = useMutation({
