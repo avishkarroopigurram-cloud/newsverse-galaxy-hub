@@ -76,7 +76,19 @@ function Home() {
   }, []);
 
   const anyData = data.latest.length > 0 || data.telanganaLead != null;
-  const featured = data.featured ?? data.telanganaLead ?? data.latest[0] ?? null;
+
+  // Editorial priority: pool all candidate leads, then pick by rank.
+  // Manually-featured (is_featured) wins; otherwise breaking > gov > telangana > hyderabad > india > … > entertainment.
+  const leadPool: A[] = [
+    ...(data.featured ? [data.featured] : []),
+    ...data.breaking,
+    ...(data.telanganaLead ? [data.telanganaLead] : []),
+    ...data.telanganaRail,
+    ...data.hyderabad,
+    ...data.trending,
+    ...data.latest,
+  ];
+  const featured = pickEditorialLead(leadPool) as A | null;
 
   // Build feed slices for the editorial grid without repeats.
   const seen = new Set<string>();
@@ -91,12 +103,14 @@ function Home() {
     return out;
   };
   if (featured) seen.add(featured.id);
-  const topStories = take(data.latest, 4);
+  // Top stories rail also follows editorial priority (not just recency).
+  const rankedLatest = sortByEditorialPriority(data.latest) as A[];
+  const topStories = take(rankedLatest, 4);
   const telanganaRail = take([data.telanganaLead, ...data.telanganaRail].filter(Boolean) as A[], 4);
   const hyderabad = take(data.hyderabad, 3);
   const trending = data.trending; // ranked; may overlap intentionally
   const editors = take(data.editorsPicks, 4);
-  const moreLatest = take(data.latest, 8);
+  const moreLatest = take(rankedLatest, 8);
 
   return (
     <div className="min-h-screen bg-white text-neutral-900" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
