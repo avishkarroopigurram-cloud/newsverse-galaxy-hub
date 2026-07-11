@@ -34,7 +34,7 @@ export const Route = createFileRoute("/")({
           "@type": "NewsMediaOrganization",
           name: "NewsVerse",
           url: "https://newsverse.today",
-          logo: "https://newsverse.today/favicon.ico",
+          logo: "https://newsverse.today/icon-512.png",
           sameAs: [],
         }),
       },
