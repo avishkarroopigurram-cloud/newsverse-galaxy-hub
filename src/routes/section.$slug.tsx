@@ -78,7 +78,7 @@ function SectionPage() {
               <Link key={a.id} to="/article/$slug" params={{ slug: a.slug }} className="group rounded-xl overflow-hidden border border-white/10 bg-white/5 hover:border-white/20 transition">
                 {a.image_url && <img src={a.image_url} alt="" loading="lazy" decoding="async" className="w-full h-44 object-cover" />}
                 <div className="p-4">
-                  <div className="text-[10px] uppercase tracking-widest text-red-400">{a.source_name ?? a.category}</div>
+                  <div className="text-[10px] uppercase tracking-widest text-red-400">{prettySourceName(a.source_name) ?? a.category}</div>
                   <h3 className="mt-2 font-semibold leading-snug group-hover:text-red-300">{a.title}</h3>
                   {a.description && <p className="mt-2 text-sm text-white/60 line-clamp-3">{a.description}</p>}
                   <div className="mt-3 text-xs text-white/50">{a.reading_time_minutes} min read</div>
