@@ -1,13 +1,11 @@
-// Core ingestion logic. Server-only.
-// Fetches NewsData sections, dedupes by external_id, upserts, then enriches N articles per run.
+// Multi-provider ingestion pipeline. Server-only.
+// Try NewsData -> GNews -> NewsAPI -> RSS in priority order, merge, dedupe,
+// rank, and persist. If every provider fails, existing cached articles in the
+// database keep serving unchanged.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import {
-  fetchNewsDataSection,
-  normalizeArticle,
-  SECTION_ORDER,
-  type SectionSlug,
-} from "./newsdata.server";
+import { SECTION_ORDER, type SectionSlug } from "./newsdata.server";
+import { aggregateSection, type ProviderArticle } from "./providers";
 import { enrichArticle } from "./ai-enrichment.server";
 
 export type IngestSummary = {
@@ -16,67 +14,86 @@ export type IngestSummary = {
   duplicates: number;
   status: "success" | "error" | "rate_limited";
   error?: string;
+  providers: Array<{ provider: string; status: string; count: number; error?: string }>;
 };
 
 export async function ingestSection(section: SectionSlug): Promise<IngestSummary> {
-  const result = await fetchNewsDataSection(section, section === "breaking" ? 10 : 10);
+  const target = section === "breaking" ? 15 : 12;
+  const { articles, providerLogs } = await aggregateSection(section, target);
 
-  if (!result.ok) {
-    await supabaseAdmin.from("article_fetch_log").insert({
-      category: section,
-      status: result.rateLimited ? "rate_limited" : "error",
-      error: result.error,
-      rate_limited: result.rateLimited,
-    });
+  // Log each provider's contribution separately for monitoring.
+  const logRows = providerLogs.map((p) => ({
+    category: section,
+    provider: p.provider,
+    status: p.status,
+    error: p.error ?? null,
+    rate_limited: p.status === "rate_limited",
+    inserted_count: 0,
+    duplicate_count: 0,
+  }));
+  if (logRows.length > 0) {
+    await supabaseAdmin.from("article_fetch_log").insert(logRows);
+  }
+
+  const allProvidersDown = providerLogs.every((p) => p.status !== "success");
+  if (articles.length === 0) {
+    const rateLimited = providerLogs.some((p) => p.status === "rate_limited");
+    const errText = providerLogs.map((p) => `${p.provider}:${p.error ?? p.status}`).join(" | ");
     return {
       section,
       inserted: 0,
       duplicates: 0,
-      status: result.rateLimited ? "rate_limited" : "error",
-      error: result.error,
+      status: allProvidersDown ? (rateLimited ? "rate_limited" : "error") : "success",
+      error: allProvidersDown ? errText : undefined,
+      providers: providerLogs,
     };
   }
 
-  const normalized = result.articles
-    .map((a) => normalizeArticle(a, section))
-    .filter((a): a is NonNullable<typeof a> => a !== null);
+  // Filter out articles already in DB (by external_id or canonical URL).
+  const externalIds = articles.map((a) => a.external_id);
+  const urls = articles.map((a) => a.url).filter((u): u is string => !!u);
+  const [{ data: byExt }, { data: byUrl }] = await Promise.all([
+    supabaseAdmin.from("articles").select("external_id").in("external_id", externalIds),
+    urls.length > 0
+      ? supabaseAdmin.from("articles").select("url").in("url", urls)
+      : Promise.resolve({ data: [] as { url: string | null }[] }),
+  ]);
+  const seenExt = new Set((byExt ?? []).map((r) => r.external_id));
+  const seenUrls = new Set((byUrl ?? []).map((r) => r.url).filter(Boolean) as string[]);
 
-  if (normalized.length === 0) {
-    await supabaseAdmin.from("article_fetch_log").insert({
-      category: section,
-      status: "success",
-      inserted_count: 0,
-      duplicate_count: 0,
-    });
-    return { section, inserted: 0, duplicates: 0, status: "success" };
-  }
+  const newOnes = articles.filter(
+    (a) => !seenExt.has(a.external_id) && (!a.url || !seenUrls.has(a.url)),
+  );
+  const duplicates = articles.length - newOnes.length;
 
-  // Check which external_ids already exist
-  const externalIds = normalized.map((a) => a.external_id);
-  const { data: existing } = await supabaseAdmin
-    .from("articles")
-    .select("external_id")
-    .in("external_id", externalIds);
-  const existingSet = new Set((existing ?? []).map((r) => r.external_id));
-
-  const newOnes = normalized.filter((a) => !existingSet.has(a.external_id));
-  const duplicates = normalized.length - newOnes.length;
-
-  // Ensure slug uniqueness within batch by appending index if collision
+  // Ensure slug uniqueness within batch.
   const slugSeen = new Set<string>();
   for (const a of newOnes) {
     let s = a.slug;
     let i = 1;
-    while (slugSeen.has(s)) {
-      s = `${a.slug}-${i++}`;
-    }
+    while (slugSeen.has(s)) s = `${a.slug}-${i++}`;
     slugSeen.add(s);
     a.slug = s;
   }
 
-  // Mark breaking section as breaking
-  const rows = newOnes.map((a) => ({
-    ...a,
+  const rows = newOnes.map((a: ProviderArticle) => ({
+    external_id: a.external_id,
+    slug: a.slug,
+    title: a.title,
+    description: a.description,
+    content: a.content,
+    url: a.url,
+    image_url: a.image_url,
+    source_id: a.source_id,
+    source_name: a.source_name,
+    author: a.author,
+    category: a.category,
+    country: a.country,
+    language: a.language,
+    keywords: a.keywords,
+    published_at: a.published_at,
+    reading_time_minutes: a.reading_time_minutes,
+    provider: a.provider,
     is_breaking: section === "breaking",
     status: "approved" as const,
   }));
@@ -89,22 +106,37 @@ export async function ingestSection(section: SectionSlug): Promise<IngestSummary
     if (error) {
       await supabaseAdmin.from("article_fetch_log").insert({
         category: section,
+        provider: "pipeline",
         status: "error",
         error: error.message,
       });
-      return { section, inserted: 0, duplicates, status: "error", error: error.message };
+      return {
+        section,
+        inserted: 0,
+        duplicates,
+        status: "error",
+        error: error.message,
+        providers: providerLogs,
+      };
     }
     inserted = count ?? rows.length;
   }
 
   await supabaseAdmin.from("article_fetch_log").insert({
     category: section,
+    provider: "pipeline",
     status: "success",
     inserted_count: inserted,
     duplicate_count: duplicates,
   });
 
-  return { section, inserted, duplicates, status: "success" };
+  return {
+    section,
+    inserted,
+    duplicates,
+    status: "success",
+    providers: providerLogs,
+  };
 }
 
 export async function ingestAllSections(): Promise<IngestSummary[]> {
@@ -112,7 +144,6 @@ export async function ingestAllSections(): Promise<IngestSummary[]> {
   for (const section of SECTION_ORDER) {
     const r = await ingestSection(section);
     results.push(r);
-    if (r.status === "rate_limited") break; // stop cascading 429s
   }
   await enrichRecent(6);
   return results;
