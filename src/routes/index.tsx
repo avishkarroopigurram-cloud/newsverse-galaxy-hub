@@ -599,7 +599,8 @@ function EditorialCard({ article, size }: { article: A; size: "sm" | "md" | "lg"
       )}
       <div className={size === "lg" ? "mt-4" : "mt-3"}>
         <div className="text-[10px] uppercase tracking-[0.22em] font-bold" style={{ color: ACCENT }}>
-          {article.source_name ?? article.category}
+          {prettySourceName(article.source_name) ?? article.category}
+
         </div>
         <h3 className={`mt-2 ${titleClass} font-semibold tracking-tight text-neutral-900 group-hover:text-neutral-700 leading-snug line-clamp-3`}
             style={{ fontFamily: "Fraunces, serif" }}>
