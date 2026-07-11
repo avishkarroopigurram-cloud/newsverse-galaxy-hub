@@ -554,10 +554,11 @@ function Featured({ article }: { article: A }) {
           </p>
         )}
         <div className="mt-4 text-xs text-neutral-500 flex flex-wrap items-center gap-x-3 gap-y-1">
-          {article.source_name && <span className="font-medium text-neutral-700">{article.source_name}</span>}
+          {prettySourceName(article.source_name) && <span className="font-medium text-neutral-700">{prettySourceName(article.source_name)}</span>}
           {article.published_at && <span>· {timeAgo(article.published_at)}</span>}
           <span>· {article.reading_time_minutes ?? 3} min read</span>
         </div>
+
       </div>
     </Link>
   );
