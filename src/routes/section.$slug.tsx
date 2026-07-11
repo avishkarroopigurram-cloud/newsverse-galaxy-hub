@@ -3,6 +3,8 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { getSectionFeed } from "@/lib/news.functions";
 import { SECTION_LABELS, type SectionSlug } from "@/lib/newsdata.server";
+import { prettySourceName } from "@/lib/source-name";
+
 
 export const Route = createFileRoute("/section/$slug")({
   head: ({ params }) => {
