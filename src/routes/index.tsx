@@ -53,7 +53,7 @@ function Home() {
         <div className="max-w-7xl mx-auto flex items-center gap-4 px-4 py-3">
           <Link to="/" className="flex items-center gap-2">
             <div className="rounded-lg bg-white p-1.5 shadow-lg">
-              <img src={logoAsset.src} alt="NewsVerse" className="h-8 w-auto" />
+              <img src={logoAsset.url} alt="NewsVerse" className="h-8 w-auto" />
             </div>
             <span className="hidden sm:inline font-bold tracking-tight text-lg">NEWS<span className="text-red-500">VERSE</span></span>
           </Link>
