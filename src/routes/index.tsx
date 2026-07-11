@@ -98,7 +98,9 @@ function Index() {
       <header>
         <div className="wrap navbar">
           <a href="#" className="logo" aria-label="NewsVerse home">
-            <img src={logoAsset.url} alt="NewsVerse logo" className="logo-img" />
+            <span className="logo-badge">
+              <img src={logoAsset.url} alt="NewsVerse logo" className="logo-img" />
+            </span>
             <span className="logo-text">news<span className="dot">•</span>verse</span>
           </a>
           <nav className="navlinks">
