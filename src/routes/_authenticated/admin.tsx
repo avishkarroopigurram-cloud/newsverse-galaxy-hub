@@ -172,10 +172,10 @@ function AdminPage() {
                         <option value="rejected">rejected</option>
                       </select>
                     </td>
-                    <td className="px-3 py-2 space-x-1">
-                      <FlagBtn on={a.is_featured} label="⭐" onClick={() => updateMut.mutate({ id: a.id, is_featured: !a.is_featured })} />
-                      <FlagBtn on={a.is_breaking} label="🔥" onClick={() => updateMut.mutate({ id: a.id, is_breaking: !a.is_breaking })} />
-                      <FlagBtn on={a.is_editors_pick} label="✏️" onClick={() => updateMut.mutate({ id: a.id, is_editors_pick: !a.is_editors_pick })} />
+                    <td className="px-3 py-2 space-x-1 whitespace-nowrap">
+                      <FlagBtn on={a.is_featured} label="⭐ Pin" onClick={() => updateMut.mutate({ id: a.id, is_featured: !a.is_featured })} />
+                      <FlagBtn on={a.is_breaking} label="🔥 Break" onClick={() => updateMut.mutate({ id: a.id, is_breaking: !a.is_breaking })} />
+                      <FlagBtn on={a.is_editors_pick} label="✏️ Pick" onClick={() => updateMut.mutate({ id: a.id, is_editors_pick: !a.is_editors_pick })} />
                     </td>
                     <td className="px-3 py-2">
                       <button onClick={() => {
