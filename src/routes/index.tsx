@@ -8,7 +8,7 @@ import { prettySourceName } from "@/lib/source-name";
 import { SECTION_ORDER, SECTION_LABELS, type SectionSlug } from "@/lib/newsdata.server";
 import { supabase } from "@/integrations/supabase/client";
 import { AdSlot, StickyMobileAd } from "@/components/AdSlot";
-import logoAsset from "@/assets/newsverse-logo.png.asset.json";
+import logoAsset from "@/assets/southindiajournal-logo.png.asset.json";
 
 const feedQuery = queryOptions({
   queryKey: ["homepage-feed"],
