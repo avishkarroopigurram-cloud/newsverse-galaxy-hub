@@ -150,10 +150,8 @@ function Home() {
             <div className="rounded-md bg-white p-1.5 ring-1 ring-neutral-200">
               <img src={logoAsset.url} alt="South India Journal" className="h-8 w-auto" />
             </div>
-            <span className="font-black tracking-tight text-xl leading-none">
-              NEWS<span style={{ color: ACCENT }}>VERSE</span>
-            </span>
           </Link>
+
 
           <nav className="hidden lg:flex items-center gap-1 text-sm justify-center col-start-2 row-start-1 justify-self-center">
             {SECTION_ORDER.slice(0, 9).map((s) => (
@@ -418,10 +416,8 @@ function Home() {
               <div className="rounded-md bg-white p-1.5">
                 <img src={logoAsset.url} alt="South India Journal" className="h-8 w-auto" />
               </div>
-              <div className="font-black tracking-tight text-xl">
-                NEWS<span style={{ color: ACCENT }}>VERSE</span>
-              </div>
             </div>
+
             <p className="mt-4 text-white/60 max-w-sm leading-relaxed">
               Truth beyond headlines. Premium editorial journalism from Telangana to the world, augmented with AI, powered by trusted global news sources.
             </p>
