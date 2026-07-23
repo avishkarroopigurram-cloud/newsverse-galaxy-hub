@@ -18,9 +18,9 @@ export const Route = createFileRoute("/article/$slug")({
   },
   head: ({ loaderData }) => {
     const a = loaderData?.article;
-    if (!a) return { meta: [{ title: "Article not found — NewsVerse" }] };
-    const desc = a.ai_meta_description ?? a.description ?? "Read on NewsVerse.";
-    const title = `${a.title} — NewsVerse`;
+    if (!a) return { meta: [{ title: "Article not found — South India Journal" }] };
+    const desc = a.ai_meta_description ?? a.description ?? "Read on South India Journal.";
+    const title = `${a.title} — South India Journal`;
     return {
       meta: [
         { title },
@@ -43,7 +43,7 @@ export const Route = createFileRoute("/article/$slug")({
             image: a.image_url ? [a.image_url] : undefined,
             datePublished: a.published_at,
             author: a.author ? [{ "@type": "Person", name: a.author }] : undefined,
-            publisher: { "@type": "Organization", name: "NewsVerse" },
+            publisher: { "@type": "Organization", name: "South India Journal" },
           }),
         },
       ],

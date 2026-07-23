@@ -64,7 +64,7 @@ export async function fetchRSS(section: SectionSlug, size: number): Promise<Prov
   for (const feed of feeds) {
     try {
       const res = await fetch(feed, {
-        headers: { "User-Agent": "NewsVerse/1.0 (+https://newsverse.today)" },
+        headers: { "User-Agent": "SouthIndiaJournal/1.0 (+https://southindiajournal.com)" },
       });
       if (!res.ok) {
         errors.push(`${feed}: HTTP ${res.status}`);

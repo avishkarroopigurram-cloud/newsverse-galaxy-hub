@@ -42,7 +42,7 @@ export async function enrichArticle(input: {
     .filter(Boolean)
     .join("\n\n");
 
-  const prompt = `You are a news editor for NewsVerse, an Indian news publication. Analyze this article and return a JSON object with:
+  const prompt = `You are a news editor for South India Journal, an Indian news publication. Analyze this article and return a JSON object with:
 - "summary": a 2-3 sentence AI summary of the story
 - "takeaways": array of 3-5 short key takeaway bullet points (each under 20 words)
 - "meta_description": SEO meta description under 155 characters

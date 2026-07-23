@@ -7,8 +7,8 @@ export const Route = createFileRoute("/search")({
   validateSearch: (s: Record<string, unknown>) => ({ q: typeof s.q === "string" ? s.q : "" }),
   head: () => ({
     meta: [
-      { title: "Search — NewsVerse" },
-      { name: "description", content: "Search NewsVerse for the latest news across Telangana, India, and the world." },
+      { title: "Search — South India Journal" },
+      { name: "description", content: "Search South India Journal for the latest news across Telangana, India, and the world." },
     ],
   }),
   component: SearchPage,
@@ -61,7 +61,7 @@ function SearchPage() {
           autoFocus
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search NewsVerse…"
+          placeholder="Search South India Journal…"
           className="mt-4 w-full rounded-xl bg-white/5 border border-white/10 focus:border-white/30 outline-none px-4 py-3 text-lg"
         />
 

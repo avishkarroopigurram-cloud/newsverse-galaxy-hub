@@ -11,10 +11,10 @@ export const Route = createFileRoute("/section/$slug")({
     const label = SECTION_LABELS[params.slug as SectionSlug] ?? params.slug;
     return {
       meta: [
-        { title: `${label} — NewsVerse` },
-        { name: "description", content: `Latest ${label} news, analysis and reports on NewsVerse.` },
-        { property: "og:title", content: `${label} — NewsVerse` },
-        { property: "og:description", content: `Latest ${label} news on NewsVerse.` },
+        { title: `${label} — South India Journal` },
+        { name: "description", content: `Latest ${label} news, analysis and reports on South India Journal.` },
+        { property: "og:title", content: `${label} — South India Journal` },
+        { property: "og:description", content: `Latest ${label} news on South India Journal.` },
       ],
     };
   },

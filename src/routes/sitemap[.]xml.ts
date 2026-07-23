@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { SECTION_ORDER } from "@/lib/newsdata.server";
 
-const BASE = "https://newsverse.today";
+const BASE = "https://southindiajournal.com";
 
 export const Route = createFileRoute("/sitemap.xml")({
   server: {

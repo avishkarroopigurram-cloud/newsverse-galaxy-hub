@@ -1,4 +1,4 @@
-// Editorial priority ranking for NewsVerse.
+// Editorial priority ranking for South India Journal.
 // Lower rank number = higher editorial importance.
 // Entertainment & cinema is always lowest priority and never leads
 // unless an editor manually flags an article as is_featured.

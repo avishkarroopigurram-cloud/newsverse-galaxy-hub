@@ -15,7 +15,7 @@ import {
 import { SECTION_ORDER, SECTION_LABELS } from "@/lib/newsdata.server";
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  head: () => ({ meta: [{ title: "Admin — NewsVerse" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Admin — South India Journal" }, { name: "robots", content: "noindex" }] }),
   component: AdminPage,
 });
 
@@ -146,7 +146,7 @@ function AdminPage() {
             Editorial priority: <span className="text-white/80">⭐ Pin</span> promotes a story to the homepage hero, overriding the automatic ranking.
             Otherwise the homepage follows the newsroom priority order (Breaking → Government → Telangana → Hyderabad → India → World → … → Entertainment last).
             <br />
-            <span className="text-white/80">📰 Original</span> publishes the story under NewsVerse Originals — in-house editorial content excluded from external provider sync.
+            <span className="text-white/80">📰 Original</span> publishes the story under South India Journal Originals — in-house editorial content excluded from external provider sync.
           </p>
           <div className="overflow-x-auto rounded-xl border border-white/10">
             <table className="w-full text-sm">

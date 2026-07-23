@@ -57,13 +57,13 @@ export function prettySourceName(_raw: string | null | undefined): string | null
 }
 
 /**
- * Source label for cards: shows "NEWSVERSE ORIGINALS" for originals,
+ * Source label for cards: shows "SOUTH INDIA JOURNAL ORIGINALS" for originals,
  * otherwise null (hide). External source names are never shown.
  */
 export function sourceLabel(opts: {
   source_name?: string | null;
   is_original?: boolean | null;
 }): string | null {
-  if (opts.is_original) return "NEWSVERSE ORIGINALS";
+  if (opts.is_original) return "SOUTH INDIA JOURNAL ORIGINALS";
   return null;
 }
