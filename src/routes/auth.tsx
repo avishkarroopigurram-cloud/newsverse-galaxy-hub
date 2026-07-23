@@ -6,8 +6,8 @@ import { lovable } from "@/integrations/lovable";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — NewsVerse" },
-      { name: "description", content: "Sign in to NewsVerse to manage news, save stories, and access editorial tools." },
+      { title: "Sign in — South India Journal" },
+      { name: "description", content: "Sign in to South India Journal to manage news, save stories, and access editorial tools." },
       { name: "robots", content: "noindex" },
     ],
   }),

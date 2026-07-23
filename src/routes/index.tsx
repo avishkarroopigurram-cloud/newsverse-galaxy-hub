@@ -22,22 +22,22 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      { title: "NewsVerse — Truth Beyond Headlines" },
+      { title: "South India Journal — Truth Beyond Headlines" },
       { name: "description", content: "Premium editorial journalism from Telangana, Hyderabad, India and the world. Breaking news, politics, business, technology, science, sports and analysis — augmented by AI." },
-      { property: "og:title", content: "NewsVerse — Truth Beyond Headlines" },
+      { property: "og:title", content: "South India Journal — Truth Beyond Headlines" },
       { property: "og:description", content: "Premium editorial journalism from Telangana, Hyderabad, India and the world." },
-      { property: "og:url", content: "https://newsverse.today/" },
+      { property: "og:url", content: "https://southindiajournal.com/" },
     ],
-    links: [{ rel: "canonical", href: "https://newsverse.today/" }],
+    links: [{ rel: "canonical", href: "https://southindiajournal.com/" }],
     scripts: [
       {
         type: "application/ld+json",
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "NewsMediaOrganization",
-          name: "NewsVerse",
-          url: "https://newsverse.today",
-          logo: "https://newsverse.today/icon-512.png",
+          name: "South India Journal",
+          url: "https://southindiajournal.com",
+          logo: "https://southindiajournal.com/icon-512.png",
           sameAs: [],
         }),
       },
@@ -148,7 +148,7 @@ function Home() {
 
           <Link to="/" className="flex items-center gap-2.5 min-w-0">
             <div className="rounded-md bg-white p-1.5 ring-1 ring-neutral-200">
-              <img src={logoAsset.url} alt="NewsVerse" className="h-8 w-auto" />
+              <img src={logoAsset.url} alt="South India Journal" className="h-8 w-auto" />
             </div>
             <span className="font-black tracking-tight text-xl leading-none">
               NEWS<span style={{ color: ACCENT }}>VERSE</span>
@@ -266,8 +266,8 @@ function Home() {
             </aside>
           </section>
 
-          {/* ---------- NEWSVERSE ORIGINALS ---------- */}
-          <NewsverseOriginals />
+          {/* ---------- SOUTH INDIA JOURNAL ORIGINALS ---------- */}
+          <SijOriginals />
 
 
 
@@ -379,7 +379,7 @@ function Home() {
               The stories shaping India, in your inbox by 7 AM.
             </h2>
             <p className="mt-4 text-white/70 max-w-xl">
-              A five-minute editorial briefing. No noise. No clickbait. Just what matters — curated by NewsVerse editors and augmented with AI context.
+              A five-minute editorial briefing. No noise. No clickbait. Just what matters — curated by South India Journal editors and augmented with AI context.
             </p>
           </div>
           <form
@@ -416,7 +416,7 @@ function Home() {
           <div className="lg:col-span-2">
             <div className="flex items-center gap-2.5">
               <div className="rounded-md bg-white p-1.5">
-                <img src={logoAsset.url} alt="NewsVerse" className="h-8 w-auto" />
+                <img src={logoAsset.url} alt="South India Journal" className="h-8 w-auto" />
               </div>
               <div className="font-black tracking-tight text-xl">
                 NEWS<span style={{ color: ACCENT }}>VERSE</span>
@@ -450,7 +450,7 @@ function Home() {
         </div>
         <div className="border-t border-white/10">
           <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-5 flex flex-wrap items-center justify-between gap-3 text-xs text-white/50">
-            <p>© {new Date().getFullYear()} NewsVerse. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} South India Journal. All rights reserved.</p>
             <p>Aggregated from trusted global sources · Enriched with AI · Made in India.</p>
           </div>
         </div>
@@ -467,7 +467,7 @@ function EmptyState() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-24 text-center">
       <h1 className="text-4xl font-semibold text-neutral-900" style={{ fontFamily: "Fraunces, serif" }}>
-        NewsVerse is loading its first stories
+        South India Journal is loading its first stories
       </h1>
       <p className="mt-4 text-neutral-600">
         Automatic news ingestion runs every 15 minutes. Fresh stories will appear here shortly — or an editor can trigger a manual refresh from the admin dashboard.
@@ -657,7 +657,7 @@ function FooterCol({ title, children }: { title: string; children: React.ReactNo
 
 import { getSectionFeed } from "@/lib/news.functions";
 
-function NewsverseOriginals() {
+function SijOriginals() {
   const [page, setPage] = useState(0);
   const pageSize = 6;
   const q = useQuery({
@@ -670,7 +670,7 @@ function NewsverseOriginals() {
 
   const [lead, ...rest] = rows;
   const shareUrl = (slug: string) =>
-    encodeURIComponent(`https://newsverse.today/article/${slug}`);
+    encodeURIComponent(`https://southindiajournal.com/article/${slug}`);
 
   return (
     <section className="mt-14 relative">
@@ -679,13 +679,13 @@ function NewsverseOriginals() {
         <div className="min-w-0">
           <div className="flex items-center gap-3">
             <span className="h-[2px] w-8" style={{ backgroundColor: ACCENT }} />
-            <span className="text-[11px] uppercase tracking-[0.25em] font-bold" style={{ color: ACCENT }}>NewsVerse Originals</span>
+            <span className="text-[11px] uppercase tracking-[0.25em] font-bold" style={{ color: ACCENT }}>South India Journal Originals</span>
             <span className="rounded-sm px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-white" style={{ backgroundColor: ACCENT }}>Exclusive</span>
           </div>
           <h2 className="mt-2 text-3xl md:text-4xl font-semibold tracking-tight text-neutral-900" style={{ fontFamily: "Fraunces, serif" }}>
-            NewsVerse Originals
+            South India Journal Originals
           </h2>
-          <p className="mt-1 text-sm text-neutral-500">Exclusive reporting from the NewsVerse Editorial Team.</p>
+          <p className="mt-1 text-sm text-neutral-500">Exclusive reporting from the South India Journal Editorial Team.</p>
         </div>
       </div>
 
@@ -777,7 +777,7 @@ function OriginalLead({ article, shareUrl }: { article: A; shareUrl: string }) {
           <p className="mt-3 text-neutral-600 line-clamp-3">{article.description}</p>
         )}
         <div className="mt-3 text-xs text-neutral-500 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="font-medium text-neutral-800">{article.author ?? "NewsVerse Editorial Team"}</span>
+          <span className="font-medium text-neutral-800">{article.author ?? "South India Journal Editorial Team"}</span>
           {article.published_at && <span>· {new Date(article.published_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>}
           <span>· {article.reading_time_minutes ?? 4} min read</span>
         </div>
@@ -802,7 +802,7 @@ function OriginalCard({ article, compact }: { article: A; compact?: boolean }) {
           {article.title}
         </h4>
         <div className="mt-2 text-[11px] text-neutral-500 flex items-center gap-2">
-          <span className="font-medium text-neutral-700">{article.author ?? "NewsVerse Editorial Team"}</span>
+          <span className="font-medium text-neutral-700">{article.author ?? "South India Journal Editorial Team"}</span>
           {article.published_at && <span>· {timeAgo(article.published_at)}</span>}
         </div>
       </div>

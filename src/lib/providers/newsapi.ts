@@ -48,7 +48,7 @@ export async function fetchNewsAPI(section: SectionSlug, size: number): Promise<
 
   try {
     const res = await fetch(`${base}?${params.toString()}`, {
-      headers: { "User-Agent": "NewsVerse/1.0" },
+      headers: { "User-Agent": "SouthIndiaJournal/1.0" },
     });
     if (res.status === 429) {
       return { ok: false, provider: "newsapi", rateLimited: true, error: "Rate limited" };

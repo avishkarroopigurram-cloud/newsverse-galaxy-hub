@@ -28,8 +28,8 @@ export default defineConfig({
           "icon-maskable-512.png",
         ],
         manifest: {
-          name: "NewsVerse — Truth Beyond Headlines",
-          short_name: "NewsVerse",
+          name: "South India Journal — Truth Beyond Headlines",
+          short_name: "South India Journal",
           description:
             "Premium editorial journalism from Telangana, Hyderabad, India and the world — augmented with AI.",
           start_url: "/",

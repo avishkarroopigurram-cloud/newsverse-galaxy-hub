@@ -4,4 +4,4 @@ Allow: /
 User-agent: Googlebot-News
 Allow: /
 
-Sitemap: https://newsverse.today/sitemap.xml
+Sitemap: https://southindiajournal.com/sitemap.xml
