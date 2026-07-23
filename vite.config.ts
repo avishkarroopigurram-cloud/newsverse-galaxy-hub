@@ -29,7 +29,7 @@ export default defineConfig({
         ],
         manifest: {
           name: "South India Journal — Truth Beyond Headlines",
-          short_name: "South India Journal",
+          short_name: "SI Journal",
           description:
             "Premium editorial journalism from Telangana, Hyderabad, India and the world — augmented with AI.",
           start_url: "/",
