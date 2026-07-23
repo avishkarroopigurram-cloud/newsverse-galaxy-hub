@@ -82,9 +82,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "theme-color", content: "#c8102e" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "apple-mobile-web-app-title", content: "South India Journal" },
+      { name: "apple-mobile-web-app-title", content: "SI Journal" },
       { name: "mobile-web-app-capable", content: "yes" },
-      { name: "application-name", content: "South India Journal" },
+      { name: "application-name", content: "SI Journal" },
       { title: "South India Journal — Truth Beyond Headlines" },
       {
         name: "description",
