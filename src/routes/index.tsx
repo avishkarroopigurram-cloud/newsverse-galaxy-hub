@@ -66,6 +66,12 @@ function Home() {
     initialData: data.breaking,
     staleTime: 30_000,
   });
+  const originalsQ = useQuery({
+    queryKey: ["nv-originals", 0],
+    queryFn: () => getOriginals({ data: { page: 0, pageSize: 6 } }),
+    staleTime: 60_000,
+  });
+  const originals = ((originalsQ.data?.rows ?? []) as A[]).map((a) => ({ ...a, is_featured: true }));
 
   const [session, setSession] = useState<{ email: string } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -79,9 +85,10 @@ function Home() {
 
   const anyData = data.latest.length > 0 || data.telanganaLead != null;
 
-  // Editorial priority: pool all candidate leads, then pick by rank.
-  // Manually-featured (is_featured) wins; otherwise breaking > gov > telangana > hyderabad > india > … > entertainment.
+  // Editorial priority: South India Journal Originals are prioritized for the hero slot,
+  // then breaking > gov > telangana > hyderabad > india > … > entertainment.
   const leadPool: A[] = [
+    ...originals,
     ...(data.featured ? [data.featured] : []),
     ...data.breaking,
     ...(data.telanganaLead ? [data.telanganaLead] : []),
@@ -90,6 +97,7 @@ function Home() {
     ...data.trending,
     ...data.latest,
   ];
+
   const featured = pickEditorialLead(leadPool.filter((a) => !!a.image_url)) as A | null;
 
   // Build feed slices for the editorial grid without repeats.
