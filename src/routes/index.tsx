@@ -155,8 +155,8 @@ function Home() {
           </button>
 
           <Link to="/" className="flex items-center gap-2.5 min-w-0">
-            <div className="rounded-md bg-white p-1.5 ring-1 ring-neutral-200">
-              <img src={logoAsset.url} alt="South India Journal" className="h-8 w-auto" />
+            <div className="rounded-md bg-white p-2.5 ring-1 ring-neutral-200">
+              <img src={logoAsset.url} alt="South India Journal" className="h-14 w-auto" />
             </div>
           </Link>
 
@@ -421,8 +421,8 @@ function Home() {
         <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-5 text-sm">
           <div className="lg:col-span-2">
             <div className="flex items-center gap-2.5">
-              <div className="rounded-md bg-white p-1.5">
-                <img src={logoAsset.url} alt="South India Journal" className="h-8 w-auto" />
+              <div className="rounded-md bg-white p-2.5">
+                <img src={logoAsset.url} alt="South India Journal" className="h-14 w-auto" />
               </div>
             </div>
 
