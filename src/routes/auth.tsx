@@ -33,16 +33,9 @@ function AuthPage() {
     e.preventDefault();
     setBusy(true); setErr(null); setNotice(null);
     try {
-      if (mode === "signin") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        navigate({ to: "/" });
-      } else {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        setNotice("Account created. You can sign in now.");
-        setMode("signin");
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      navigate({ to: "/admin" });
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
