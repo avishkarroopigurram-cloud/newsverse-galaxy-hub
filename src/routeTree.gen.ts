@@ -17,6 +17,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SectionSlugRouteImport } from './routes/section.$slug'
 import { Route as ArticleSlugRouteImport } from './routes/article.$slug'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as ApiPublicInitAdminRouteImport } from './routes/api/public/init-admin'
 import { Route as ApiPublicCronIngestNewsRouteImport } from './routes/api/public/cron/ingest-news'
 import { Route as ApiPublicCronIngestBreakingRouteImport } from './routes/api/public/cron/ingest-breaking'
 
@@ -59,6 +60,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicInitAdminRoute = ApiPublicInitAdminRouteImport.update({
+  id: '/api/public/init-admin',
+  path: '/api/public/init-admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCronIngestNewsRoute = ApiPublicCronIngestNewsRouteImport.update({
   id: '/api/public/cron/ingest-news',
   path: '/api/public/cron/ingest-news',
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/article/$slug': typeof ArticleSlugRoute
   '/section/$slug': typeof SectionSlugRoute
+  '/api/public/init-admin': typeof ApiPublicInitAdminRoute
   '/api/public/cron/ingest-breaking': typeof ApiPublicCronIngestBreakingRoute
   '/api/public/cron/ingest-news': typeof ApiPublicCronIngestNewsRoute
 }
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRoute
   '/article/$slug': typeof ArticleSlugRoute
   '/section/$slug': typeof SectionSlugRoute
+  '/api/public/init-admin': typeof ApiPublicInitAdminRoute
   '/api/public/cron/ingest-breaking': typeof ApiPublicCronIngestBreakingRoute
   '/api/public/cron/ingest-news': typeof ApiPublicCronIngestNewsRoute
 }
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/article/$slug': typeof ArticleSlugRoute
   '/section/$slug': typeof SectionSlugRoute
+  '/api/public/init-admin': typeof ApiPublicInitAdminRoute
   '/api/public/cron/ingest-breaking': typeof ApiPublicCronIngestBreakingRoute
   '/api/public/cron/ingest-news': typeof ApiPublicCronIngestNewsRoute
 }
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/article/$slug'
     | '/section/$slug'
+    | '/api/public/init-admin'
     | '/api/public/cron/ingest-breaking'
     | '/api/public/cron/ingest-news'
   fileRoutesByTo: FileRoutesByTo
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/article/$slug'
     | '/section/$slug'
+    | '/api/public/init-admin'
     | '/api/public/cron/ingest-breaking'
     | '/api/public/cron/ingest-news'
   id:
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/article/$slug'
     | '/section/$slug'
+    | '/api/public/init-admin'
     | '/api/public/cron/ingest-breaking'
     | '/api/public/cron/ingest-news'
   fileRoutesById: FileRoutesById
@@ -151,6 +163,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ArticleSlugRoute: typeof ArticleSlugRoute
   SectionSlugRoute: typeof SectionSlugRoute
+  ApiPublicInitAdminRoute: typeof ApiPublicInitAdminRoute
   ApiPublicCronIngestBreakingRoute: typeof ApiPublicCronIngestBreakingRoute
   ApiPublicCronIngestNewsRoute: typeof ApiPublicCronIngestNewsRoute
 }
@@ -213,6 +226,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/init-admin': {
+      id: '/api/public/init-admin'
+      path: '/api/public/init-admin'
+      fullPath: '/api/public/init-admin'
+      preLoaderRoute: typeof ApiPublicInitAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/ingest-news': {
       id: '/api/public/cron/ingest-news'
       path: '/api/public/cron/ingest-news'
@@ -249,6 +269,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ArticleSlugRoute: ArticleSlugRoute,
   SectionSlugRoute: SectionSlugRoute,
+  ApiPublicInitAdminRoute: ApiPublicInitAdminRoute,
   ApiPublicCronIngestBreakingRoute: ApiPublicCronIngestBreakingRoute,
   ApiPublicCronIngestNewsRoute: ApiPublicCronIngestNewsRoute,
 }

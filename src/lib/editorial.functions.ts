@@ -34,13 +34,8 @@ const publishSchema = z.object({
   scheduledFor: z.string().optional(),
 });
 
-async function assertAdmin(ctx: {
-  supabase: Awaited<ReturnType<typeof requireSupabaseAuth._types.middlewares[0]>>;
-  userId: string;
-}) {
-  // Runtime type-safe check via existing has_role RPC.
-  // (Cast to any to avoid pulling the middleware's inferred type shape.)
-  const supabase = ctx.supabase as unknown as {
+async function assertAdmin(ctx: { supabase: unknown; userId: string }) {
+  const supabase = ctx.supabase as {
     rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
   };
   const { data, error } = await supabase.rpc("has_role", {
