@@ -92,12 +92,8 @@ function AuthPage() {
           </button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-white/60">
-          {mode === "signin" ? (
-            <>New here? <button onClick={() => setMode("signup")} className="text-white underline">Create an account</button></>
-          ) : (
-            <>Already have an account? <button onClick={() => setMode("signin")} className="text-white underline">Sign in</button></>
-          )}
+        <p className="mt-4 text-center text-xs text-white/40">
+          Editorial access only. Public signup is disabled.
         </p>
       </div>
     </div>
