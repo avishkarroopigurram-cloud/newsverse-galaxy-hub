@@ -33,16 +33,9 @@ function AuthPage() {
     e.preventDefault();
     setBusy(true); setErr(null); setNotice(null);
     try {
-      if (mode === "signin") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        navigate({ to: "/" });
-      } else {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        setNotice("Account created. You can sign in now.");
-        setMode("signin");
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      navigate({ to: "/admin" });
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -64,9 +57,9 @@ function AuthPage() {
     <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center px-4">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-8">
         <div className="text-center mb-6">
-          <Link to="/" className="text-2xl font-bold tracking-tight">NEWS<span className="text-red-500">VERSE</span></Link>
-          <h1 className="mt-3 text-xl font-semibold">{mode === "signin" ? "Welcome back" : "Create your account"}</h1>
-          <p className="mt-1 text-sm text-white/60">Sign in to manage news and access editorial tools.</p>
+          <Link to="/" className="text-xl font-serif tracking-tight">South India Journal</Link>
+          <h1 className="mt-3 text-xl font-semibold">Editorial sign in</h1>
+          <p className="mt-1 text-sm text-white/60">Authorized editors only.</p>
         </div>
 
         <button
@@ -92,12 +85,8 @@ function AuthPage() {
           </button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-white/60">
-          {mode === "signin" ? (
-            <>New here? <button onClick={() => setMode("signup")} className="text-white underline">Create an account</button></>
-          ) : (
-            <>Already have an account? <button onClick={() => setMode("signin")} className="text-white underline">Sign in</button></>
-          )}
+        <p className="mt-4 text-center text-xs text-white/40">
+          Editorial access only. Public signup is disabled.
         </p>
       </div>
     </div>
