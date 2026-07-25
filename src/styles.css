@@ -142,3 +142,41 @@
     color: var(--color-foreground);
   }
 }
+
+/* --- AI Editorial Desk theme tokens (ink/paper/brass palette) --- */
+@theme {
+  --font-display: "Fraunces", "Georgia", serif;
+  --color-ink-950: #0b0d12;
+  --color-ink-900: #10131a;
+  --color-ink-800: #14171f;
+  --color-ink-700: #1b1f2a;
+  --color-ink-600: #262b38;
+  --color-ink-500: #3a4152;
+  --color-paper-100: #edeef2;
+  --color-paper-300: #c7c9d4;
+  --color-paper-500: #9497a6;
+  --color-paper-700: #6b6e7d;
+  --color-brass-400: #d9b968;
+  --color-brass-500: #c9a24b;
+  --color-brass-600: #a6832f;
+  --color-signal-400: #8790ff;
+  --color-signal-500: #6e7bff;
+  --color-danger-500: #e5654c;
+  --color-warn-500: #d9a441;
+  --color-good-500: #5fb384;
+  --radius-card: 0.875rem;
+}
+
+@keyframes wire-pulse {
+  0%, 100% { opacity: 0.35; transform: scaleX(0.4); }
+  50% { opacity: 1; transform: scaleX(1); }
+}
+.wire-pulse { position: relative; }
+.wire-pulse::after {
+  content: "";
+  position: absolute;
+  left: 1.25rem; right: 1.25rem; bottom: -1px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-brass-500), transparent);
+  transform-origin: center;
+  animation: wire-pulse 3s ease-in-out infinite;
+}
