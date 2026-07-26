@@ -72,47 +72,48 @@ type ContentPart =
   | { type: "inlineData"; inlineData: { mimeType: string; data: string } };
 
 /**
- * Validates and normalizes a private key from Google service account JSON.
- * Handles escaped newlines (\\n) that occur when the key is stored in environment variables.
- * @param privateKey Raw private key string, potentially with escaped newlines
- * @returns Normalized private key ready for cryptographic operations
- * @throws Error with diagnostic information if validation fails
+ * Normalizes a private key from Google service account JSON.
+ * Handles both actual newlines (\n) and escaped newlines (\\n) transparently.
+ * @param privateKey Raw private key string from service account JSON
+ * @returns Normalized private key ready for RSA signing
+ * @throws Error if key format is invalid
  */
 function normalizePrivateKey(privateKey: string): string {
   if (!privateKey || typeof privateKey !== "string") {
     throw new Error("Private key is missing or not a string");
   }
 
-  // Replace escaped newlines (\\n from environment variables) with actual newlines
+  // Handle both escaped (\\n) and literal (\n) newlines
+  // First, normalize any escaped newlines to literal newlines
   let normalized = privateKey.replace(/\\n/g, "\n");
-
-  // Trim whitespace
+  
+  // Trim any surrounding whitespace
   normalized = normalized.trim();
 
-  // Check length (PKCS#8 private keys are typically 1700-3000 characters)
+  // Validate minimum length (PKCS#8 RSA private keys are typically 1700+ chars)
   if (normalized.length < 500) {
     throw new Error(
       `Private key is suspiciously short (${normalized.length} chars). ` +
-      "The key may be truncated. Expected 1700+ characters for a valid PKCS#8 key."
+      "The key may be truncated or incomplete. Expected 1700+ characters for a valid PKCS#8 key."
     );
   }
 
-  // Validate key format
+  // Validate PEM markers
   if (!normalized.startsWith("-----BEGIN PRIVATE KEY-----")) {
     throw new Error(
-      "Private key does not start with '-----BEGIN PRIVATE KEY-----'. " +
-      "Expected PKCS#8 format. Check that the JSON was not escaped or truncated."
+      "Private key does not begin with the PKCS#8 marker '-----BEGIN PRIVATE KEY-----'. " +
+      "Verify the key is in PKCS#8 format and not truncated."
     );
   }
 
   if (!normalized.endsWith("-----END PRIVATE KEY-----")) {
     throw new Error(
-      "Private key does not end with '-----END PRIVATE KEY-----'. " +
-      "The key may be truncated, malformed, or have extra characters at the end."
+      "Private key does not end with the PKCS#8 marker '-----END PRIVATE KEY-----'. " +
+      "The key may be truncated or have extra characters at the end."
     );
   }
 
-  // Verify the key contains only valid base64 characters between markers
+  // Validate base64 content between markers
   const keyBody = normalized
     .replace("-----BEGIN PRIVATE KEY-----", "")
     .replace("-----END PRIVATE KEY-----", "")
@@ -121,7 +122,7 @@ function normalizePrivateKey(privateKey: string): string {
   if (!/^[A-Za-z0-9+/]*={0,2}$/.test(keyBody)) {
     throw new Error(
       "Private key body contains invalid base64 characters. " +
-      "The key may be corrupted or contain extra whitespace within the key data."
+      "The key may be corrupted, incomplete, or have extra whitespace embedded within it."
     );
   }
 
@@ -129,95 +130,90 @@ function normalizePrivateKey(privateKey: string): string {
 }
 
 /**
- * Validates the structure of a parsed service account JSON object.
- * Provides detailed diagnostics without exposing secrets.
+ * Validates the structure and content of a parsed service account JSON object.
+ * Provides detailed, actionable error messages without exposing sensitive data.
  * @param sa Parsed service account object
- * @throws Error with specific validation failure details
+ * @throws TypeScript assertion error or Error with diagnostic details
  */
 function validateServiceAccount(sa: unknown): asserts sa is ServiceAccountKey {
   if (!sa || typeof sa !== "object") {
-    throw new Error("VERTEX_SA_JSON is not a valid JSON object");
+    throw new Error(
+      "VERTEX_SA_JSON could not be parsed as a JSON object. " +
+      "Verify the environment variable contains valid JSON."
+    );
   }
 
   const obj = sa as Record<string, unknown>;
 
-  // Check required fields exist
+  // Check all required fields
   const requiredFields = ["type", "project_id", "private_key_id", "private_key", "client_email"];
   const missingFields = requiredFields.filter(field => !obj[field]);
 
   if (missingFields.length > 0) {
     throw new Error(
       `VERTEX_SA_JSON is missing required fields: ${missingFields.join(", ")}. ` +
-      "Ensure you've copied the complete service account JSON from Google Cloud Console."
+      "Ensure you've downloaded the complete service account JSON from Google Cloud Console."
     );
   }
 
   // Validate field types
-  if (typeof obj.type !== "string") {
-    throw new Error('Field "type" must be a string, expected "service_account"');
-  }
-
-  if (typeof obj.project_id !== "string") {
-    throw new Error('Field "project_id" must be a string (Google Cloud project ID)');
-  }
-
-  if (typeof obj.private_key !== "string") {
-    throw new Error('Field "private_key" must be a string (PEM-formatted PKCS#8 key)');
-  }
-
-  if (typeof obj.client_email !== "string") {
-    throw new Error('Field "client_email" must be a string (service account email)');
-  }
-
-  if (typeof obj.private_key_id !== "string") {
-    throw new Error('Field "private_key_id" must be a string (key fingerprint)');
+  const stringFields = ["type", "project_id", "private_key_id", "private_key", "client_email"];
+  for (const field of stringFields) {
+    if (typeof obj[field] !== "string") {
+      throw new Error(
+        `VERTEX_SA_JSON field "${field}" must be a string, but got ${typeof obj[field]}. ` +
+        "The JSON may be corrupted or incomplete."
+      );
+    }
   }
 
   // Validate type is "service_account"
-  if (obj.type !== "service_account") {
+  const accountType = obj.type as string;
+  if (accountType !== "service_account") {
     throw new Error(
-      `Field "type" is "${obj.type}", expected "service_account". ` +
+      `VERTEX_SA_JSON field "type" is "${accountType}", expected "service_account". ` +
       "This does not appear to be a Google service account JSON."
     );
   }
 
   // Validate email format
-  if (!obj.client_email.includes("@")) {
+  const email = obj.client_email as string;
+  if (!email.includes("@")) {
     throw new Error(
-      'Field "client_email" does not contain "@". ' +
-      "The field appears corrupted or truncated."
+      'VERTEX_SA_JSON field "client_email" is invalid. ' +
+      "Email should contain '@' and look like: account-name@project-id.iam.gserviceaccount.com"
     );
   }
 
-  // Validate project_id is not a placeholder
+  // Validate project ID is not a placeholder
   const projectId = obj.project_id as string;
-  if (projectId === "" || projectId === "your-project-id" || projectId === "PROJECT_ID") {
+  if (!projectId || projectId === "your-project-id" || projectId === "PROJECT_ID") {
     throw new Error(
-      `Field "project_id" is "${projectId}". ` +
-      "The service account JSON has not been properly configured with a real project ID."
+      `VERTEX_SA_JSON field "project_id" is "${projectId}". ` +
+      "This appears to be a template/placeholder. Use a real Google Cloud project ID."
     );
   }
 }
 
 /**
- * Obtains a Vertex AI access token using the service account key.
- * Implements Google's JWT OAuth2 flow per RFC 6749 / Google Cloud documentation.
+ * Obtains a Vertex AI access token using Google's JWT OAuth2 flow.
+ * Reference: https://cloud.google.com/docs/authentication/service-account
  */
 async function getVertexAIAccessToken(serviceAccount: ServiceAccountKey): Promise<string> {
-  // Validate and normalize the private key
-  const normalizedPrivateKey = normalizePrivateKey(serviceAccount.private_key);
+  // Normalize and validate the private key
+  const privateKey = normalizePrivateKey(serviceAccount.private_key);
 
   const now = Math.floor(Date.now() / 1000);
-  const expiresAt = now + 3600; // 1 hour
+  const expiresAt = now + 3600; // Token valid for 1 hour
 
-  // Build JWT header and payload
+  // Build JWT header and claims
   const header = {
     alg: "RS256",
     typ: "JWT",
     kid: serviceAccount.private_key_id,
   };
 
-  const payload = {
+  const claims = {
     iss: serviceAccount.client_email,
     sub: serviceAccount.client_email,
     scope: "https://www.googleapis.com/auth/cloud-platform",
@@ -226,85 +222,75 @@ async function getVertexAIAccessToken(serviceAccount: ServiceAccountKey): Promis
     exp: expiresAt,
   };
 
-  // Encode JWT using base64url
-  const headerEncoded = Buffer.from(JSON.stringify(header)).toString("base64url");
-  const payloadEncoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
-  const messageToSign = `${headerEncoded}.${payloadEncoded}`;
+  // Encode header and claims as base64url
+  const headerB64 = Buffer.from(JSON.stringify(header)).toString("base64url");
+  const claimsB64 = Buffer.from(JSON.stringify(claims)).toString("base64url");
+  const signInput = `${headerB64}.${claimsB64}`;
 
-  // Sign with private key using RS256
+  // Sign with RSA-SHA256
+  let jwtSignature: string;
   try {
     const crypto = await import("crypto");
-    const sign = crypto.createSign("RSA-SHA256");
-    sign.update(messageToSign);
-    const signatureBuffer = sign.sign(normalizedPrivateKey);
-    const signatureEncoded = signatureBuffer.toString("base64url");
-
-    return `${messageToSign}.${signatureEncoded}`;
+    const signer = crypto.createSign("RSA-SHA256");
+    signer.update(signInput);
+    const signatureBytes = signer.sign(privateKey);
+    jwtSignature = signatureBytes.toString("base64url");
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
-    
-    // Provide diagnostic hints based on common errors
-    let diagnostic = "";
-    if (errorMsg.includes("PEM routines")) {
-      diagnostic = "The Node.js crypto module failed to parse the private key as PEM. " +
-        "The key may have invalid base64 encoding or incorrect formatting. " +
-        "Verify the key starts/ends with the correct markers and contains no extra characters.";
-    } else if (errorMsg.includes("key")) {
-      diagnostic = "The private key format is not recognized. " +
-        "Ensure the key is PKCS#8 format (-----BEGIN PRIVATE KEY-----)";
-    } else if (errorMsg.includes("RSA")) {
-      diagnostic = "The key does not appear to be a valid RSA private key. " +
-        "Ensure you've downloaded the correct service account key type.";
+    throw new Error(
+      `Failed to sign JWT with private key: ${errorMsg}. ` +
+      "The private key may be invalid, corrupted, or not in PKCS#8 format. " +
+      "Verify VERTEX_SA_JSON was downloaded directly from Google Cloud Console without modification."
+    );
+  }
+
+  const jwt = `${signInput}.${jwtSignature}`;
+
+  // Exchange JWT for access token
+  try {
+    const response = await fetch(GOOGLE_TOKEN_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        assertion: jwt,
+      }).toString(),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(
+        `Google token endpoint returned ${response.status}: ${errorBody.slice(0, 200)}`
+      );
     }
 
+    const tokenData = (await response.json()) as {
+      access_token?: string;
+      expires_in?: number;
+    };
+
+    if (!tokenData.access_token) {
+      throw new Error(
+        "Google token endpoint response missing 'access_token' field. " +
+        "The JWT may be invalid or the service account may have insufficient permissions."
+      );
+    }
+
+    return tokenData.access_token;
+  } catch (err) {
     throw new Error(
-      `Failed to sign JWT: ${errorMsg}. ${diagnostic} ` +
-      "Verify VERTEX_SA_JSON contains a complete, valid Google service account key."
+      `Failed to exchange JWT for access token: ${err instanceof Error ? err.message : String(err)}. ` +
+      "Verify the service account has Vertex AI API permissions in Google Cloud Console."
     );
   }
 }
 
 /**
- * Exchanges a JWT for a Google OAuth2 access token.
- * @param jwt The signed JWT assertion
- * @returns OAuth2 access token valid for 1 hour
- */
-async function exchangeJwtForAccessToken(jwt: string): Promise<string> {
-  const tokenResponse = await fetch(GOOGLE_TOKEN_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion: jwt,
-    }).toString(),
-  });
-
-  if (!tokenResponse.ok) {
-    const errorText = await tokenResponse.text();
-    throw new Error(
-      `Failed to obtain Vertex AI access token: ${tokenResponse.status} ${errorText}`,
-    );
-  }
-
-  const tokenData = (await tokenResponse.json()) as {
-    access_token?: string;
-    expires_in?: number;
-  };
-
-  if (!tokenData.access_token) {
-    throw new Error("No access_token in response from Google token endpoint");
-  }
-
-  return tokenData.access_token;
-}
-
-/**
- * Converts a data URL to base64-encoded content with MIME type.
- * Vertex AI requires inlineData format for images, not OpenAI-style data URLs.
- * @param dataUrl Data URL in format "data:image/jpeg;base64,/9j/4AAQSkZJRg..."
- * @returns Object with mimeType and base64 content, or null if invalid format
+ * Converts a data URL to Vertex AI inlineData format.
+ * @param dataUrl Data URL like "data:image/jpeg;base64,/9j/4AAQSkZJRg..."
+ * @returns Object with mimeType and base64, or null if format invalid
  */
 function parseDataUrl(dataUrl: string): { mimeType: string; base64: string } | null {
   const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
@@ -354,57 +340,46 @@ ${input.rawText}
 export async function runEditorialReviewGemini(
   draft: ArticleDraftInput,
 ): Promise<EditorialReviewResult> {
-  // Load service account credentials
-  const saJson = process.env.VERTEX_SA_JSON;
-  if (!saJson) {
+  // Load service account credentials from environment
+  const saJsonString = process.env.VERTEX_SA_JSON;
+  if (!saJsonString) {
     throw new Error(
-      "AI service is not configured (missing VERTEX_SA_JSON on the server). " +
-      "Set VERTEX_SA_JSON to your complete Google service account JSON from Cloud Console.",
+      "Vertex AI is not configured. Set the VERTEX_SA_JSON environment variable " +
+      "to your complete Google service account JSON (download from Cloud Console)."
     );
   }
 
-  // Parse JSON
+  // Parse the JSON string
   let serviceAccount: ServiceAccountKey;
   try {
-    serviceAccount = JSON.parse(saJson) as ServiceAccountKey;
-  } catch (err) {
+    serviceAccount = JSON.parse(saJsonString) as ServiceAccountKey;
+  } catch (parseErr) {
     throw new Error(
-      `VERTEX_SA_JSON is not valid JSON: ${err instanceof Error ? err.message : String(err)}. ` +
-      "Ensure the environment variable contains the complete service account JSON without truncation."
+      `VERTEX_SA_JSON is not valid JSON: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}. ` +
+      "Verify the environment variable contains the complete, unmodified service account JSON."
     );
   }
 
-  // Validate service account structure and fields
+  // Validate the service account structure
   try {
     validateServiceAccount(serviceAccount);
-  } catch (err) {
-    throw err;
+  } catch (validateErr) {
+    throw validateErr;
   }
 
-  // Generate JWT and obtain access token
-  let jwt: string;
-  try {
-    jwt = await getVertexAIAccessToken(serviceAccount);
-  } catch (err) {
-    throw err;
-  }
-
+  // Generate JWT and exchange for access token
   let accessToken: string;
   try {
-    accessToken = await exchangeJwtForAccessToken(jwt);
-  } catch (err) {
-    throw new Error(
-      `Failed to exchange JWT for access token: ${err instanceof Error ? err.message : String(err)}. ` +
-      "Verify the service account has Vertex AI permissions in Google Cloud Console."
-    );
+    accessToken = await getVertexAIAccessToken(serviceAccount);
+  } catch (authErr) {
+    throw authErr;
   }
 
   const projectId = serviceAccount.project_id;
 
-  // Build request content parts: text + images
+  // Prepare request: text + images
   const parts: ContentPart[] = [{ type: "text", text: buildPrompt(draft) }];
 
-  // Convert data URLs to Vertex AI inlineData format
   for (const dataUrl of draft.imageDataUrls ?? []) {
     if (typeof dataUrl !== "string" || !dataUrl.startsWith("data:")) continue;
     const parsed = parseDataUrl(dataUrl);
@@ -418,12 +393,13 @@ export async function runEditorialReviewGemini(
     });
   }
 
-  // Construct Vertex AI generateContent endpoint URL
+  // Construct Vertex AI endpoint URL
   const endpointUrl = `https://${VERTEX_AI_REGION}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${VERTEX_AI_REGION}/publishers/google/models/${MODEL}:generateContent`;
 
-  let res: Response;
+  // Call Vertex AI API
+  let response: Response;
   try {
-    res = await fetch(endpointUrl, {
+    response = await fetch(endpointUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -451,44 +427,61 @@ export async function runEditorialReviewGemini(
         },
       }),
     });
-  } catch (err) {
+  } catch (fetchErr) {
     throw new Error(
-      `Vertex AI request failed: ${err instanceof Error ? err.message : String(err)}`,
+      `Network error calling Vertex AI: ${fetchErr instanceof Error ? fetchErr.message : String(fetchErr)}`
     );
   }
 
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    if (res.status === 429) {
-      throw new Error("Vertex AI service is rate-limited. Please retry in a moment.");
-    }
-    if (res.status === 403) {
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => "");
+    
+    if (response.status === 401 || response.status === 403) {
       throw new Error(
-        "Access denied: service account may lack Vertex AI permissions.",
+        `Vertex AI authentication failed (${response.status}). ` +
+        "The service account may lack Vertex AI permissions. " +
+        "Verify the service account has 'Vertex AI User' role in Google Cloud Console."
       );
     }
+
+    if (response.status === 429) {
+      throw new Error(
+        "Vertex AI API rate limit exceeded. Please retry in a moment."
+      );
+    }
+
     throw new Error(
-      `Vertex AI error (${res.status}): ${body.slice(0, 400) || res.statusText}`,
+      `Vertex AI API error (${response.status}): ${errorBody.slice(0, 300) || response.statusText}`
     );
   }
 
-  const payload = (await res.json().catch(() => null)) as {
+  // Parse response
+  const responseData = (await response.json().catch(() => null)) as {
     candidates?: { content?: { parts?: { text?: string }[] } }[];
   } | null;
 
-  const text = payload?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error("Vertex AI service returned an empty response.");
+  const generatedText = responseData?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!generatedText) {
+    throw new Error(
+      "Vertex AI returned an empty response. The model may not have generated any content."
+    );
+  }
 
-  // Be tolerant of accidental code fences
-  const cleaned = text
+  // Clean up JSON (remove code fences if present)
+  const cleanedJson = generatedText
     .trim()
     .replace(/^```(?:json)?\s*/i, "")
-    .replace(/```$/i, "")
+    .replace(/```\s*$/i, "")
     .trim();
 
+  // Parse and return the result
   try {
-    return JSON.parse(cleaned) as EditorialReviewResult;
-  } catch {
-    throw new Error("Vertex AI service returned invalid JSON.");
+    return JSON.parse(cleanedJson) as EditorialReviewResult;
+  } catch (parseErr) {
+    throw new Error(
+      `Vertex AI returned invalid JSON: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}. ` +
+      "The model may have violated the response schema. Response was: " +
+      cleanedJson.slice(0, 200)
+    );
   }
 }
