@@ -76,7 +76,7 @@ type ContentPart =
  * Handles escaped newlines (\\n) that occur when the key is stored in environment variables.
  * @param privateKey Raw private key string, potentially with escaped newlines
  * @returns Normalized private key ready for cryptographic operations
- * @throws Error if the key format is invalid
+ * @throws Error with diagnostic information if validation fails
  */
 function normalizePrivateKey(privateKey: string): string {
   if (!privateKey || typeof privateKey !== "string") {
@@ -89,22 +89,114 @@ function normalizePrivateKey(privateKey: string): string {
   // Trim whitespace
   normalized = normalized.trim();
 
+  // Check length (PKCS#8 private keys are typically 1700-3000 characters)
+  if (normalized.length < 500) {
+    throw new Error(
+      `Private key is suspiciously short (${normalized.length} chars). ` +
+      "The key may be truncated. Expected 1700+ characters for a valid PKCS#8 key."
+    );
+  }
+
   // Validate key format
   if (!normalized.startsWith("-----BEGIN PRIVATE KEY-----")) {
     throw new Error(
       "Private key does not start with '-----BEGIN PRIVATE KEY-----'. " +
-      "The key may be corrupted or in an unsupported format."
+      "Expected PKCS#8 format. Check that the JSON was not escaped or truncated."
     );
   }
 
   if (!normalized.endsWith("-----END PRIVATE KEY-----")) {
     throw new Error(
       "Private key does not end with '-----END PRIVATE KEY-----'. " +
-      "The key may be truncated or corrupted."
+      "The key may be truncated, malformed, or have extra characters at the end."
+    );
+  }
+
+  // Verify the key contains only valid base64 characters between markers
+  const keyBody = normalized
+    .replace("-----BEGIN PRIVATE KEY-----", "")
+    .replace("-----END PRIVATE KEY-----", "")
+    .replace(/\s/g, ""); // Remove all whitespace
+
+  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(keyBody)) {
+    throw new Error(
+      "Private key body contains invalid base64 characters. " +
+      "The key may be corrupted or contain extra whitespace within the key data."
     );
   }
 
   return normalized;
+}
+
+/**
+ * Validates the structure of a parsed service account JSON object.
+ * Provides detailed diagnostics without exposing secrets.
+ * @param sa Parsed service account object
+ * @throws Error with specific validation failure details
+ */
+function validateServiceAccount(sa: unknown): asserts sa is ServiceAccountKey {
+  if (!sa || typeof sa !== "object") {
+    throw new Error("VERTEX_SA_JSON is not a valid JSON object");
+  }
+
+  const obj = sa as Record<string, unknown>;
+
+  // Check required fields exist
+  const requiredFields = ["type", "project_id", "private_key_id", "private_key", "client_email"];
+  const missingFields = requiredFields.filter(field => !obj[field]);
+
+  if (missingFields.length > 0) {
+    throw new Error(
+      `VERTEX_SA_JSON is missing required fields: ${missingFields.join(", ")}. ` +
+      "Ensure you've copied the complete service account JSON from Google Cloud Console."
+    );
+  }
+
+  // Validate field types
+  if (typeof obj.type !== "string") {
+    throw new Error('Field "type" must be a string, expected "service_account"');
+  }
+
+  if (typeof obj.project_id !== "string") {
+    throw new Error('Field "project_id" must be a string (Google Cloud project ID)');
+  }
+
+  if (typeof obj.private_key !== "string") {
+    throw new Error('Field "private_key" must be a string (PEM-formatted PKCS#8 key)');
+  }
+
+  if (typeof obj.client_email !== "string") {
+    throw new Error('Field "client_email" must be a string (service account email)');
+  }
+
+  if (typeof obj.private_key_id !== "string") {
+    throw new Error('Field "private_key_id" must be a string (key fingerprint)');
+  }
+
+  // Validate type is "service_account"
+  if (obj.type !== "service_account") {
+    throw new Error(
+      `Field "type" is "${obj.type}", expected "service_account". ` +
+      "This does not appear to be a Google service account JSON."
+    );
+  }
+
+  // Validate email format
+  if (!obj.client_email.includes("@")) {
+    throw new Error(
+      'Field "client_email" does not contain "@". ' +
+      "The field appears corrupted or truncated."
+    );
+  }
+
+  // Validate project_id is not a placeholder
+  const projectId = obj.project_id as string;
+  if (projectId === "" || projectId === "your-project-id" || projectId === "PROJECT_ID") {
+    throw new Error(
+      `Field "project_id" is "${projectId}". ` +
+      "The service account JSON has not been properly configured with a real project ID."
+    );
+  }
 }
 
 /**
@@ -140,19 +232,34 @@ async function getVertexAIAccessToken(serviceAccount: ServiceAccountKey): Promis
   const messageToSign = `${headerEncoded}.${payloadEncoded}`;
 
   // Sign with private key using RS256
-  let sign;
   try {
     const crypto = await import("crypto");
-    sign = crypto.createSign("RSA-SHA256");
+    const sign = crypto.createSign("RSA-SHA256");
     sign.update(messageToSign);
     const signatureBuffer = sign.sign(normalizedPrivateKey);
     const signatureEncoded = signatureBuffer.toString("base64url");
 
     return `${messageToSign}.${signatureEncoded}`;
   } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    
+    // Provide diagnostic hints based on common errors
+    let diagnostic = "";
+    if (errorMsg.includes("PEM routines")) {
+      diagnostic = "The Node.js crypto module failed to parse the private key as PEM. " +
+        "The key may have invalid base64 encoding or incorrect formatting. " +
+        "Verify the key starts/ends with the correct markers and contains no extra characters.";
+    } else if (errorMsg.includes("key")) {
+      diagnostic = "The private key format is not recognized. " +
+        "Ensure the key is PKCS#8 format (-----BEGIN PRIVATE KEY-----)";
+    } else if (errorMsg.includes("RSA")) {
+      diagnostic = "The key does not appear to be a valid RSA private key. " +
+        "Ensure you've downloaded the correct service account key type.";
+    }
+
     throw new Error(
-      `Failed to sign JWT: ${err instanceof Error ? err.message : String(err)}. ` +
-      "The private key may be malformed or incompatible with RSA-SHA256 signing."
+      `Failed to sign JWT: ${errorMsg}. ${diagnostic} ` +
+      "Verify VERTEX_SA_JSON contains a complete, valid Google service account key."
     );
   }
 }
@@ -247,32 +354,31 @@ ${input.rawText}
 export async function runEditorialReviewGemini(
   draft: ArticleDraftInput,
 ): Promise<EditorialReviewResult> {
-  // Load and parse service account credentials
+  // Load service account credentials
   const saJson = process.env.VERTEX_SA_JSON;
   if (!saJson) {
     throw new Error(
-      "AI service is not configured (missing VERTEX_SA_JSON on the server).",
+      "AI service is not configured (missing VERTEX_SA_JSON on the server). " +
+      "Set VERTEX_SA_JSON to your complete Google service account JSON from Cloud Console.",
     );
   }
 
+  // Parse JSON
   let serviceAccount: ServiceAccountKey;
   try {
     serviceAccount = JSON.parse(saJson) as ServiceAccountKey;
   } catch (err) {
     throw new Error(
-      `Invalid VERTEX_SA_JSON: failed to parse as JSON. ${err instanceof Error ? err.message : String(err)}`
+      `VERTEX_SA_JSON is not valid JSON: ${err instanceof Error ? err.message : String(err)}. ` +
+      "Ensure the environment variable contains the complete service account JSON without truncation."
     );
   }
 
-  // Validate required fields
-  if (!serviceAccount.project_id) {
-    throw new Error("VERTEX_SA_JSON is missing required field: project_id");
-  }
-  if (!serviceAccount.private_key) {
-    throw new Error("VERTEX_SA_JSON is missing required field: private_key");
-  }
-  if (!serviceAccount.client_email) {
-    throw new Error("VERTEX_SA_JSON is missing required field: client_email");
+  // Validate service account structure and fields
+  try {
+    validateServiceAccount(serviceAccount);
+  } catch (err) {
+    throw err;
   }
 
   // Generate JWT and obtain access token
@@ -280,9 +386,7 @@ export async function runEditorialReviewGemini(
   try {
     jwt = await getVertexAIAccessToken(serviceAccount);
   } catch (err) {
-    throw new Error(
-      `Failed to generate JWT: ${err instanceof Error ? err.message : String(err)}`
-    );
+    throw err;
   }
 
   let accessToken: string;
@@ -290,7 +394,8 @@ export async function runEditorialReviewGemini(
     accessToken = await exchangeJwtForAccessToken(jwt);
   } catch (err) {
     throw new Error(
-      `Failed to exchange JWT for access token: ${err instanceof Error ? err.message : String(err)}`
+      `Failed to exchange JWT for access token: ${err instanceof Error ? err.message : String(err)}. ` +
+      "Verify the service account has Vertex AI permissions in Google Cloud Console."
     );
   }
 
