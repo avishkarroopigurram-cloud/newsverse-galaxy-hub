@@ -72,10 +72,49 @@ type ContentPart =
   | { type: "inlineData"; inlineData: { mimeType: string; data: string } };
 
 /**
+ * Validates and normalizes a private key from Google service account JSON.
+ * Handles escaped newlines (\\n) that occur when the key is stored in environment variables.
+ * @param privateKey Raw private key string, potentially with escaped newlines
+ * @returns Normalized private key ready for cryptographic operations
+ * @throws Error if the key format is invalid
+ */
+function normalizePrivateKey(privateKey: string): string {
+  if (!privateKey || typeof privateKey !== "string") {
+    throw new Error("Private key is missing or not a string");
+  }
+
+  // Replace escaped newlines (\\n from environment variables) with actual newlines
+  let normalized = privateKey.replace(/\\n/g, "\n");
+
+  // Trim whitespace
+  normalized = normalized.trim();
+
+  // Validate key format
+  if (!normalized.startsWith("-----BEGIN PRIVATE KEY-----")) {
+    throw new Error(
+      "Private key does not start with '-----BEGIN PRIVATE KEY-----'. " +
+      "The key may be corrupted or in an unsupported format."
+    );
+  }
+
+  if (!normalized.endsWith("-----END PRIVATE KEY-----")) {
+    throw new Error(
+      "Private key does not end with '-----END PRIVATE KEY-----'. " +
+      "The key may be truncated or corrupted."
+    );
+  }
+
+  return normalized;
+}
+
+/**
  * Obtains a Vertex AI access token using the service account key.
  * Implements Google's JWT OAuth2 flow per RFC 6749 / Google Cloud documentation.
  */
 async function getVertexAIAccessToken(serviceAccount: ServiceAccountKey): Promise<string> {
+  // Validate and normalize the private key
+  const normalizedPrivateKey = normalizePrivateKey(serviceAccount.private_key);
+
   const now = Math.floor(Date.now() / 1000);
   const expiresAt = now + 3600; // 1 hour
 
@@ -95,21 +134,35 @@ async function getVertexAIAccessToken(serviceAccount: ServiceAccountKey): Promis
     exp: expiresAt,
   };
 
-  // Encode JWT
+  // Encode JWT using base64url
   const headerEncoded = Buffer.from(JSON.stringify(header)).toString("base64url");
   const payloadEncoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const messageToSign = `${headerEncoded}.${payloadEncoded}`;
 
-  // Sign with private key
-  const crypto = await import("crypto");
-  const sign = crypto.createSign("RSA-SHA256");
-  sign.update(messageToSign);
-  const signatureBuffer = sign.sign(serviceAccount.private_key);
-  const signatureEncoded = signatureBuffer.toString("base64url");
+  // Sign with private key using RS256
+  let sign;
+  try {
+    const crypto = await import("crypto");
+    sign = crypto.createSign("RSA-SHA256");
+    sign.update(messageToSign);
+    const signatureBuffer = sign.sign(normalizedPrivateKey);
+    const signatureEncoded = signatureBuffer.toString("base64url");
 
-  const jwt = `${messageToSign}.${signatureEncoded}`;
+    return `${messageToSign}.${signatureEncoded}`;
+  } catch (err) {
+    throw new Error(
+      `Failed to sign JWT: ${err instanceof Error ? err.message : String(err)}. ` +
+      "The private key may be malformed or incompatible with RSA-SHA256 signing."
+    );
+  }
+}
 
-  // Exchange JWT for access token
+/**
+ * Exchanges a JWT for a Google OAuth2 access token.
+ * @param jwt The signed JWT assertion
+ * @returns OAuth2 access token valid for 1 hour
+ */
+async function exchangeJwtForAccessToken(jwt: string): Promise<string> {
   const tokenResponse = await fetch(GOOGLE_TOKEN_ENDPOINT, {
     method: "POST",
     headers: {
@@ -142,7 +195,9 @@ async function getVertexAIAccessToken(serviceAccount: ServiceAccountKey): Promis
 
 /**
  * Converts a data URL to base64-encoded content with MIME type.
- * Vertex AI requires inlineData format for images, not data URLs.
+ * Vertex AI requires inlineData format for images, not OpenAI-style data URLs.
+ * @param dataUrl Data URL in format "data:image/jpeg;base64,/9j/4AAQSkZJRg..."
+ * @returns Object with mimeType and base64 content, or null if invalid format
  */
 function parseDataUrl(dataUrl: string): { mimeType: string; base64: string } | null {
   const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
@@ -203,15 +258,45 @@ export async function runEditorialReviewGemini(
   let serviceAccount: ServiceAccountKey;
   try {
     serviceAccount = JSON.parse(saJson) as ServiceAccountKey;
-  } catch {
-    throw new Error("Invalid VERTEX_SA_JSON: failed to parse as JSON");
+  } catch (err) {
+    throw new Error(
+      `Invalid VERTEX_SA_JSON: failed to parse as JSON. ${err instanceof Error ? err.message : String(err)}`
+    );
   }
 
-  // Obtain access token
-  const accessToken = await getVertexAIAccessToken(serviceAccount);
+  // Validate required fields
+  if (!serviceAccount.project_id) {
+    throw new Error("VERTEX_SA_JSON is missing required field: project_id");
+  }
+  if (!serviceAccount.private_key) {
+    throw new Error("VERTEX_SA_JSON is missing required field: private_key");
+  }
+  if (!serviceAccount.client_email) {
+    throw new Error("VERTEX_SA_JSON is missing required field: client_email");
+  }
+
+  // Generate JWT and obtain access token
+  let jwt: string;
+  try {
+    jwt = await getVertexAIAccessToken(serviceAccount);
+  } catch (err) {
+    throw new Error(
+      `Failed to generate JWT: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+
+  let accessToken: string;
+  try {
+    accessToken = await exchangeJwtForAccessToken(jwt);
+  } catch (err) {
+    throw new Error(
+      `Failed to exchange JWT for access token: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+
   const projectId = serviceAccount.project_id;
 
-  // Build request content parts
+  // Build request content parts: text + images
   const parts: ContentPart[] = [{ type: "text", text: buildPrompt(draft) }];
 
   // Convert data URLs to Vertex AI inlineData format
@@ -228,7 +313,7 @@ export async function runEditorialReviewGemini(
     });
   }
 
-  // Construct Vertex AI endpoint URL
+  // Construct Vertex AI generateContent endpoint URL
   const endpointUrl = `https://${VERTEX_AI_REGION}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${VERTEX_AI_REGION}/publishers/google/models/${MODEL}:generateContent`;
 
   let res: Response;
@@ -289,7 +374,7 @@ export async function runEditorialReviewGemini(
   const text = payload?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) throw new Error("Vertex AI service returned an empty response.");
 
-  // Be tolerant of accidental code fences.
+  // Be tolerant of accidental code fences
   const cleaned = text
     .trim()
     .replace(/^```(?:json)?\s*/i, "")
