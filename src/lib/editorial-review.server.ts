@@ -6,9 +6,9 @@
 
 import type { ArticleDraftInput, EditorialReviewResult } from "@/types/editorial";
 
-const PROJECT_ID_PLACEHOLDER = "google-cloud-project"; // Extracted from service account at runtime
 const VERTEX_AI_REGION = "us-central1";
-const MODEL = "gemini-2.5-flash-001";
+const MODEL = "gemini-2.5-flash";
+const GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 
 const EDITORIAL_PROFILE = `
 You are the South India Journal AI Editor: a professional Editor-in-Chief
@@ -67,9 +67,13 @@ interface ServiceAccountKey {
   universe_domain: string;
 }
 
+type ContentPart = 
+  | { type: "text"; text: string }
+  | { type: "inlineData"; inlineData: { mimeType: string; data: string } };
+
 /**
  * Obtains a Vertex AI access token using the service account key.
- * Implements Google's JWT OAuth2 flow for service account authentication.
+ * Implements Google's JWT OAuth2 flow per RFC 6749 / Google Cloud documentation.
  */
 async function getVertexAIAccessToken(serviceAccount: ServiceAccountKey): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
@@ -86,7 +90,7 @@ async function getVertexAIAccessToken(serviceAccount: ServiceAccountKey): Promis
     iss: serviceAccount.client_email,
     sub: serviceAccount.client_email,
     scope: "https://www.googleapis.com/auth/cloud-platform",
-    aud: serviceAccount.token_uri,
+    aud: GOOGLE_TOKEN_ENDPOINT,
     iat: now,
     exp: expiresAt,
   };
@@ -106,7 +110,7 @@ async function getVertexAIAccessToken(serviceAccount: ServiceAccountKey): Promis
   const jwt = `${messageToSign}.${signatureEncoded}`;
 
   // Exchange JWT for access token
-  const tokenResponse = await fetch(serviceAccount.token_uri, {
+  const tokenResponse = await fetch(GOOGLE_TOKEN_ENDPOINT, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -134,6 +138,19 @@ async function getVertexAIAccessToken(serviceAccount: ServiceAccountKey): Promis
   }
 
   return tokenData.access_token;
+}
+
+/**
+ * Converts a data URL to base64-encoded content with MIME type.
+ * Vertex AI requires inlineData format for images, not data URLs.
+ */
+function parseDataUrl(dataUrl: string): { mimeType: string; base64: string } | null {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) return null;
+  return {
+    mimeType: match[1],
+    base64: match[2],
+  };
 }
 
 function buildPrompt(input: ArticleDraftInput): string {
@@ -172,10 +189,6 @@ ${input.rawText}
 """`.trim();
 }
 
-type ChatContentPart =
-  | { type: "text"; text: string }
-  | { type: "image_url"; image_url: { url: string } };
-
 export async function runEditorialReviewGemini(
   draft: ArticleDraftInput,
 ): Promise<EditorialReviewResult> {
@@ -199,10 +212,20 @@ export async function runEditorialReviewGemini(
   const projectId = serviceAccount.project_id;
 
   // Build request content parts
-  const parts: ChatContentPart[] = [{ type: "text", text: buildPrompt(draft) }];
+  const parts: ContentPart[] = [{ type: "text", text: buildPrompt(draft) }];
+
+  // Convert data URLs to Vertex AI inlineData format
   for (const dataUrl of draft.imageDataUrls ?? []) {
     if (typeof dataUrl !== "string" || !dataUrl.startsWith("data:")) continue;
-    parts.push({ type: "image_url", image_url: { url: dataUrl } });
+    const parsed = parseDataUrl(dataUrl);
+    if (!parsed) continue;
+    parts.push({
+      type: "inlineData",
+      inlineData: {
+        mimeType: parsed.mimeType,
+        data: parsed.base64,
+      },
+    });
   }
 
   // Construct Vertex AI endpoint URL
@@ -232,7 +255,9 @@ export async function runEditorialReviewGemini(
         },
         generationConfig: {
           temperature: 0.4,
-          responseFormat: "JSON",
+          responseFormat: {
+            type: "JSON",
+          },
         },
       }),
     });
