@@ -1,14 +1,14 @@
 // Server-only: editorial review pipeline for the AI Editorial Desk.
-// Routes through the Lovable AI Gateway (OpenAI-compatible) using
-// LOVABLE_API_KEY. This avoids the permission issues of calling the
-// Google Generative Language API directly with a bring-your-own key.
+// Calls Vertex AI Gemini endpoint directly using service account authentication.
+// Service account credentials read from VERTEX_SA_JSON environment variable.
 // Never import from client / route files directly — imported by
 // editorial.functions.ts handlers only.
 
 import type { ArticleDraftInput, EditorialReviewResult } from "@/types/editorial";
 
-const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-2.5-flash";
+const PROJECT_ID_PLACEHOLDER = "google-cloud-project"; // Extracted from service account at runtime
+const VERTEX_AI_REGION = "us-central1";
+const MODEL = "gemini-2.5-flash-001";
 
 const EDITORIAL_PROFILE = `
 You are the South India Journal AI Editor: a professional Editor-in-Chief
@@ -53,6 +53,89 @@ Return ONLY a single JSON object (no markdown fences, no prose) with EXACTLY the
 All keys are REQUIRED. Arrays may be empty but must be present. Scores are 0-100 integers.
 `.trim();
 
+interface ServiceAccountKey {
+  type: string;
+  project_id: string;
+  private_key_id: string;
+  private_key: string;
+  client_email: string;
+  client_id: string;
+  auth_uri: string;
+  token_uri: string;
+  auth_provider_x509_cert_url: string;
+  client_x509_cert_url: string;
+  universe_domain: string;
+}
+
+/**
+ * Obtains a Vertex AI access token using the service account key.
+ * Implements Google's JWT OAuth2 flow for service account authentication.
+ */
+async function getVertexAIAccessToken(serviceAccount: ServiceAccountKey): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  const expiresAt = now + 3600; // 1 hour
+
+  // Build JWT header and payload
+  const header = {
+    alg: "RS256",
+    typ: "JWT",
+    kid: serviceAccount.private_key_id,
+  };
+
+  const payload = {
+    iss: serviceAccount.client_email,
+    sub: serviceAccount.client_email,
+    scope: "https://www.googleapis.com/auth/cloud-platform",
+    aud: serviceAccount.token_uri,
+    iat: now,
+    exp: expiresAt,
+  };
+
+  // Encode JWT
+  const headerEncoded = Buffer.from(JSON.stringify(header)).toString("base64url");
+  const payloadEncoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const messageToSign = `${headerEncoded}.${payloadEncoded}`;
+
+  // Sign with private key
+  const crypto = await import("crypto");
+  const sign = crypto.createSign("RSA-SHA256");
+  sign.update(messageToSign);
+  const signatureBuffer = sign.sign(serviceAccount.private_key);
+  const signatureEncoded = signatureBuffer.toString("base64url");
+
+  const jwt = `${messageToSign}.${signatureEncoded}`;
+
+  // Exchange JWT for access token
+  const tokenResponse = await fetch(serviceAccount.token_uri, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion: jwt,
+    }).toString(),
+  });
+
+  if (!tokenResponse.ok) {
+    const errorText = await tokenResponse.text();
+    throw new Error(
+      `Failed to obtain Vertex AI access token: ${tokenResponse.status} ${errorText}`,
+    );
+  }
+
+  const tokenData = (await tokenResponse.json()) as {
+    access_token?: string;
+    expires_in?: number;
+  };
+
+  if (!tokenData.access_token) {
+    throw new Error("No access_token in response from Google token endpoint");
+  }
+
+  return tokenData.access_token;
+}
+
 function buildPrompt(input: ArticleDraftInput): string {
   const sourceNote =
     input.sourceType === "voice"
@@ -96,67 +179,90 @@ type ChatContentPart =
 export async function runEditorialReviewGemini(
   draft: ArticleDraftInput,
 ): Promise<EditorialReviewResult> {
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key) {
+  // Load and parse service account credentials
+  const saJson = process.env.VERTEX_SA_JSON;
+  if (!saJson) {
     throw new Error(
-      "AI service is not configured (missing LOVABLE_API_KEY on the server).",
+      "AI service is not configured (missing VERTEX_SA_JSON on the server).",
     );
   }
 
+  let serviceAccount: ServiceAccountKey;
+  try {
+    serviceAccount = JSON.parse(saJson) as ServiceAccountKey;
+  } catch {
+    throw new Error("Invalid VERTEX_SA_JSON: failed to parse as JSON");
+  }
+
+  // Obtain access token
+  const accessToken = await getVertexAIAccessToken(serviceAccount);
+  const projectId = serviceAccount.project_id;
+
+  // Build request content parts
   const parts: ChatContentPart[] = [{ type: "text", text: buildPrompt(draft) }];
   for (const dataUrl of draft.imageDataUrls ?? []) {
     if (typeof dataUrl !== "string" || !dataUrl.startsWith("data:")) continue;
     parts.push({ type: "image_url", image_url: { url: dataUrl } });
   }
 
+  // Construct Vertex AI endpoint URL
+  const endpointUrl = `https://${VERTEX_AI_REGION}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${VERTEX_AI_REGION}/publishers/google/models/${MODEL}:generateContent`;
+
   let res: Response;
   try {
-    res = await fetch(GATEWAY_URL, {
+    res = await fetch(endpointUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Lovable-API-Key": key,
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
-        model: MODEL,
-        messages: [
+        contents: [
           {
-            role: "system",
-            content:
-              "You output only a single valid JSON object matching the requested schema. No markdown, no prose, no code fences.",
+            role: "user",
+            parts: parts,
           },
-          { role: "user", content: parts },
         ],
-        temperature: 0.4,
-        response_format: { type: "json_object" },
+        systemInstruction: {
+          parts: [
+            {
+              text: "You output only a single valid JSON object matching the requested schema. No markdown, no prose, no code fences.",
+            },
+          ],
+        },
+        generationConfig: {
+          temperature: 0.4,
+          responseFormat: "JSON",
+        },
       }),
     });
   } catch (err) {
     throw new Error(
-      `AI gateway request failed: ${err instanceof Error ? err.message : String(err)}`,
+      `Vertex AI request failed: ${err instanceof Error ? err.message : String(err)}`,
     );
   }
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     if (res.status === 429) {
-      throw new Error("AI service is rate-limited. Please retry in a moment.");
+      throw new Error("Vertex AI service is rate-limited. Please retry in a moment.");
     }
-    if (res.status === 402) {
+    if (res.status === 403) {
       throw new Error(
-        "AI credits exhausted for this workspace. Add credits in Settings → Plans & credits.",
+        "Access denied: service account may lack Vertex AI permissions.",
       );
     }
     throw new Error(
-      `AI gateway error (${res.status}): ${body.slice(0, 400) || res.statusText}`,
+      `Vertex AI error (${res.status}): ${body.slice(0, 400) || res.statusText}`,
     );
   }
 
   const payload = (await res.json().catch(() => null)) as {
-    choices?: { message?: { content?: string } }[];
+    candidates?: { content?: { parts?: { text?: string }[] } }[];
   } | null;
-  const text = payload?.choices?.[0]?.message?.content;
-  if (!text) throw new Error("AI service returned an empty response.");
+
+  const text = payload?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error("Vertex AI service returned an empty response.");
 
   // Be tolerant of accidental code fences.
   const cleaned = text
@@ -168,6 +274,6 @@ export async function runEditorialReviewGemini(
   try {
     return JSON.parse(cleaned) as EditorialReviewResult;
   } catch {
-    throw new Error("AI service returned invalid JSON.");
+    throw new Error("Vertex AI service returned invalid JSON.");
   }
 }
