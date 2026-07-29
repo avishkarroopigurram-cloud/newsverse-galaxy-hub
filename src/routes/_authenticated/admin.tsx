@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Menu } from "lucide-react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AdminSidebar, type NavKey } from "@/components/admin/AdminSidebar";
@@ -30,6 +31,7 @@ async function fetchIsAdmin(): Promise<boolean> {
 function AdminPage() {
   const navigate = useNavigate();
   const [active, setActive] = useState<NavKey>("desk");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const roleQ = useQuery({ queryKey: ["is-admin"], queryFn: fetchIsAdmin });
 
   useEffect(() => {
@@ -61,11 +63,28 @@ function AdminPage() {
   }
 
   return (
-    <div className="flex h-screen bg-ink-950 font-sans">
-      <AdminSidebar active={active} onSelect={setActive} />
-      <main className="flex-1 overflow-hidden">
-        {active === "desk" && <EditorialDeskShell />}
-        {active !== "desk" && <PhasePlaceholder active={active} />}
+    <div className="flex h-[100dvh] bg-ink-950 font-sans">
+      <AdminSidebar
+        active={active}
+        onSelect={setActive}
+        isMobileOpen={mobileNavOpen}
+        onCloseMobile={() => setMobileNavOpen(false)}
+      />
+      <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex items-center gap-3 border-b border-ink-600 bg-ink-900 px-4 py-3 md:hidden">
+          <button
+            onClick={() => setMobileNavOpen(true)}
+            className="rounded p-1.5 text-paper-300 hover:bg-ink-700"
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <p className="font-display text-base text-paper-100">South India Journal</p>
+        </div>
+        <div className="flex-1 overflow-hidden">
+          {active === "desk" && <EditorialDeskShell />}
+          {active !== "desk" && <PhasePlaceholder active={active} />}
+        </div>
       </main>
     </div>
   );

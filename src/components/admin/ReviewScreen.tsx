@@ -47,7 +47,7 @@ export function ReviewScreen({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-ink-600 px-6 py-4">
+      <div className="flex items-center justify-between border-b border-ink-600 px-4 py-3 sm:px-6 sm:py-4">
         <Button variant="ghost" size="sm" onClick={onBack}>
           <ArrowLeft className="h-3.5 w-3.5" /> Back to desk
         </Button>
@@ -57,14 +57,14 @@ export function ReviewScreen({
         </div>
       </div>
 
-      <div className="grid flex-1 grid-cols-1 gap-6 overflow-y-auto px-6 py-6 lg:grid-cols-[1.4fr_1fr]">
+      <div className="grid flex-1 grid-cols-1 gap-4 overflow-y-auto px-4 py-4 sm:gap-6 sm:px-6 sm:py-6 lg:grid-cols-[1.4fr_1fr]">
         <div className="space-y-4">
           <Card>
             <CardContent className="space-y-3 p-5">
               <input
                 value={headline}
                 onChange={(e) => setHeadline(e.target.value)}
-                className="w-full bg-transparent font-display text-2xl text-paper-100 focus:outline-none"
+                className="w-full bg-transparent font-display text-xl text-paper-100 focus:outline-none sm:text-2xl"
               />
               <input
                 value={subheadline}
