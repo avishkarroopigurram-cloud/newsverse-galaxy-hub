@@ -6,6 +6,7 @@ import {
   BarChart3,
   Settings,
   Lock,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,44 +35,79 @@ const NAV_ITEMS: Array<{
 export function AdminSidebar({
   active,
   onSelect,
+  isMobileOpen = false,
+  onCloseMobile,
 }: {
   active: NavKey;
   onSelect: (key: NavKey) => void;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }) {
   return (
-    <aside className="flex h-full w-60 shrink-0 flex-col border-r border-ink-600 bg-ink-900 px-3 py-4">
-      <div className="mb-6 px-2">
-        <p className="font-display text-lg text-paper-100">South India Journal</p>
-        <p className="text-xs text-paper-700">AI Editorial Desk</p>
-      </div>
+    <>
+      {/* Mobile overlay */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 md:hidden"
+          onClick={onCloseMobile}
+          aria-hidden
+        />
+      )}
 
-      <nav className="flex flex-1 flex-col gap-1">
-        {NAV_ITEMS.map(({ key, label, icon: Icon, editable }) => (
-          <button
-            key={key}
-            onClick={() => onSelect(key)}
-            className={cn(
-              "flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors",
-              active === key
-                ? "bg-ink-700 text-paper-100"
-                : "text-paper-500 hover:bg-ink-800 hover:text-paper-100",
-            )}
-          >
-            <span className="flex items-center gap-2.5">
-              <Icon className="h-4 w-4" />
-              {label}
-            </span>
-            {!editable && <Lock className="h-3 w-3 text-paper-700" />}
-          </button>
-        ))}
-      </nav>
+      <aside
+        className={cn(
+          "flex h-full w-60 shrink-0 flex-col border-r border-ink-600 bg-ink-900 px-3 py-4",
+          "fixed inset-y-0 left-0 z-50 transition-transform md:static md:translate-x-0",
+          isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+        )}
+      >
+        <div className="mb-6 flex items-start justify-between px-2">
+          <div>
+            <p className="font-display text-lg text-paper-100">South India Journal</p>
+            <p className="text-xs text-paper-700">AI Editorial Desk</p>
+          </div>
+          {onCloseMobile && (
+            <button
+              onClick={onCloseMobile}
+              className="rounded p-1 text-paper-500 hover:bg-ink-700 hover:text-paper-100 md:hidden"
+              aria-label="Close menu"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
 
-      <div className="rounded-lg border border-ink-600 bg-ink-800/60 px-3 py-2.5 text-xs text-paper-700">
-        The AI Editor can only publish to <span className="text-paper-300">Hero</span> and{" "}
-        <span className="text-paper-300">Originals</span>. All other sections are populated
-        automatically and locked from this dashboard.
-      </div>
-    </aside>
+        <nav className="flex flex-1 flex-col gap-1">
+          {NAV_ITEMS.map(({ key, label, icon: Icon, editable }) => (
+            <button
+              key={key}
+              onClick={() => {
+                onSelect(key);
+                onCloseMobile?.();
+              }}
+              className={cn(
+                "flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors",
+                active === key
+                  ? "bg-ink-700 text-paper-100"
+                  : "text-paper-500 hover:bg-ink-800 hover:text-paper-100",
+              )}
+            >
+              <span className="flex items-center gap-2.5">
+                <Icon className="h-4 w-4" />
+                {label}
+              </span>
+              {!editable && <Lock className="h-3 w-3 text-paper-700" />}
+            </button>
+          ))}
+        </nav>
+
+        <div className="rounded-lg border border-ink-600 bg-ink-800/60 px-3 py-2.5 text-xs text-paper-700">
+          The AI Editor can only publish to <span className="text-paper-300">Hero</span> and{" "}
+          <span className="text-paper-300">Originals</span>. All other sections are populated
+          automatically and locked from this dashboard.
+        </div>
+      </aside>
+    </>
   );
 }
 
