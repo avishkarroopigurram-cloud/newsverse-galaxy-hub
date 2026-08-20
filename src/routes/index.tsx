@@ -179,7 +179,7 @@ function Home() {
             <Link to="/auth" className="text-xs sm:text-sm rounded-md border border-neutral-300 px-2 sm:px-3 py-1.5 hover:bg-neutral-50 font-medium text-neutral-700">
               Login
             </Link>
-            <Link to="/search" aria-label="Search" className="h-9 w-9 grid place-items-center rounded-md hover:bg-neutral-100 text-neutral-700">
+            <Link to="/search" search={{ q: "" }} aria-label="Search" className="h-9 w-9 grid place-items-center rounded-md hover:bg-neutral-100 text-neutral-700">
               <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" strokeLinecap="round" /></svg>
             </Link>
             {session ? (
@@ -447,7 +447,7 @@ function Home() {
             ))}
           </FooterCol>
           <FooterCol title="Company">
-            <li><Link to="/search" className="text-white/60 hover:text-white">Search</Link></li>
+            <li><Link to="/search" search={{ q: "" }} className="text-white/60 hover:text-white">Search</Link></li>
             <li><a href="#newsletter" className="text-white/60 hover:text-white">Newsletter</a></li>
             <li><Link to="/auth" className="text-white/60 hover:text-white">Sign in</Link></li>
             <li><a href="/sitemap.xml" className="text-white/60 hover:text-white">Sitemap</a></li>
