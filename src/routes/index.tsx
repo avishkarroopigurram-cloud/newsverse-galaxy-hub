@@ -9,6 +9,7 @@ import { SECTION_ORDER, SECTION_LABELS, type SectionSlug } from "@/lib/newsdata.
 import { supabase } from "@/integrations/supabase/client";
 import { AdSlot, StickyMobileAd } from "@/components/AdSlot";
 import logoAsset from "@/assets/southindiajournal-logo.png.asset.json";
+import vijayaHeroRail1Asset from "@/assets/vijaya-hero-rail-1.jpg.asset.json";
 
 const feedQuery = queryOptions({
   queryKey: ["homepage-feed"],
