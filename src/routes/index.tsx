@@ -268,7 +268,7 @@ function Home() {
                 ))}
               </ul>
               <div className="mt-6">
-                <AdSlot size="rectangle" slotId="hero-rail-1" />
+                <AdSlot size="rectangle" slotId="hero-rail-1" imageUrl={vijayaHeroRail1Asset.url} alt="Vijaya Oils advertisement" />
               </div>
             </aside>
           </section>
