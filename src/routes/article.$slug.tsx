@@ -72,7 +72,7 @@ function ArticlePage() {
       <header className="border-b border-white/10 sticky top-0 z-40 bg-[#0a0a0f]/80 backdrop-blur">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-4 py-4">
           <Link to="/" className="font-bold tracking-tight">NEWS<span className="text-red-500">VERSE</span></Link>
-          <Link to="/search" className="text-sm text-white/70 hover:text-white">Search</Link>
+          <Link to="/search" search={{ q: "" }} className="text-sm text-white/70 hover:text-white">Search</Link>
         </div>
       </header>
 

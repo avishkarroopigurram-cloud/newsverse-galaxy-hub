@@ -26,13 +26,36 @@ export function AdSlot({
   slotId,
   tone = "light",
   className = "",
+  imageUrl,
+  alt = "Advertisement",
 }: {
   size: AdSize;
   slotId: string;
   tone?: "light" | "dark";
   className?: string;
+  imageUrl?: string;
+  alt?: string;
 }) {
   const bg = tone === "dark" ? "bg-white/[0.03] border-white/10 text-white/40" : "bg-neutral-50 border-neutral-200 text-neutral-400";
+
+  if (imageUrl) {
+    return (
+      <aside
+        aria-label="Advertisement"
+        data-ad-slot={slotId}
+        className={`w-full overflow-hidden rounded-md border border-neutral-200 ${SIZE_CLASS[size]} ${className}`}
+      >
+        <img
+          src={imageUrl}
+          alt={alt}
+          className="w-full h-full object-cover"
+          loading="lazy"
+          referrerPolicy="no-referrer"
+        />
+      </aside>
+    );
+  }
+
   return (
     <aside
       aria-label="Advertisement"
