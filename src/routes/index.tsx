@@ -660,7 +660,6 @@ function FooterCol({ title, children }: { title: string; children: React.ReactNo
 // ---------------- CATEGORY STRIPS ----------------
 // Lazy secondary sections rendered client-side per category.
 
-import { getSectionFeed } from "@/lib/news.functions";
 
 function SijOriginals() {
   const [page, setPage] = useState(0);
