@@ -126,7 +126,10 @@ function Home() {
   // Top stories rail also follows editorial priority (not just recency).
   const rankedLatest = sortByEditorialPriority(data.latest) as A[];
   const topStories = take(rankedLatest, 4);
-  const telanganaRail = take([data.telanganaLead, ...data.telanganaRail].filter(Boolean) as A[], 4);
+  const telanganaRail = take(
+    [data.telanganaLead, ...telanganaLive, ...data.telanganaRail].filter(Boolean) as A[],
+    4,
+  );
   const hyderabad = take(data.hyderabad, 3);
   const trending = data.trending; // ranked; may overlap intentionally
   const editors = take(data.editorsPicks, 4);
