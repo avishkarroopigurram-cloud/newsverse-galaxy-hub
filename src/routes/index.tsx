@@ -115,6 +115,7 @@ function Home() {
   // then breaking > gov > telangana > hyderabad > india > … > entertainment.
   const leadPool: A[] = [
     ...originals,
+    ...breakingLive,
     ...(data.featured ? [data.featured] : []),
     ...data.breaking,
     ...(data.telanganaLead ? [data.telanganaLead] : []),
@@ -123,9 +124,15 @@ function Home() {
     ...data.hyderabad,
     ...data.trending,
     ...data.latest,
+    ...staleOriginals,
   ];
 
-  const featured = pickEditorialLead(leadPool.filter((a) => !!a.image_url)) as A | null;
+  const withImage = leadPool.filter((a) => !!a.image_url);
+  // Hero must be current news: restrict to the last 24h whenever such stories exist.
+  const recent = withImage.filter(
+    (a) => !!a.published_at && Date.now() - Date.parse(a.published_at) < 24 * 3_600_000,
+  );
+  const featured = pickEditorialLead(recent.length ? recent : withImage) as A | null;
 
   // Build feed slices for the editorial grid without repeats.
   const seen = new Set<string>();
