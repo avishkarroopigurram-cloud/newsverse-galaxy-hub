@@ -76,7 +76,7 @@ function Home() {
     initialData: data.breaking,
     staleTime: 30_000,
   });
-  // Main Telangana news, auto-refreshed from the same news API feed as other sections.
+  const breakingLive = ((breaking.data ?? []) as A[]);
   const telanganaQ = useQuery({
     queryKey: ["telangana-live"],
     queryFn: () => getSectionFeed({ data: { section: "telangana", page: 0, pageSize: 12 } }),
@@ -90,7 +90,13 @@ function Home() {
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
-  const originals = ((originalsQ.data?.rows ?? []) as A[]).map((a) => ({ ...a, is_featured: true }));
+  // Originals only get hero priority while they are still fresh (< 48h old),
+  // otherwise the hero would stay stuck on an old editorial piece.
+  const allOriginals = (originalsQ.data?.rows ?? []) as A[];
+  const isFresh = (a: A) =>
+    !!a.published_at && Date.now() - Date.parse(a.published_at) < 48 * 3_600_000;
+  const originals = allOriginals.filter(isFresh).map((a) => ({ ...a, is_featured: true }));
+  const staleOriginals = allOriginals.filter((a) => !isFresh(a));
 
 
   const [session, setSession] = useState<{ email: string } | null>(null);
@@ -109,6 +115,7 @@ function Home() {
   // then breaking > gov > telangana > hyderabad > india > … > entertainment.
   const leadPool: A[] = [
     ...originals,
+    ...breakingLive,
     ...(data.featured ? [data.featured] : []),
     ...data.breaking,
     ...(data.telanganaLead ? [data.telanganaLead] : []),
@@ -117,9 +124,15 @@ function Home() {
     ...data.hyderabad,
     ...data.trending,
     ...data.latest,
+    ...staleOriginals,
   ];
 
-  const featured = pickEditorialLead(leadPool.filter((a) => !!a.image_url)) as A | null;
+  const withImage = leadPool.filter((a) => !!a.image_url);
+  // Hero must be current news: restrict to the last 24h whenever such stories exist.
+  const recent = withImage.filter(
+    (a) => !!a.published_at && Date.now() - Date.parse(a.published_at) < 24 * 3_600_000,
+  );
+  const featured = pickEditorialLead(recent.length ? recent : withImage) as A | null;
 
   // Build feed slices for the editorial grid without repeats.
   const seen = new Set<string>();
