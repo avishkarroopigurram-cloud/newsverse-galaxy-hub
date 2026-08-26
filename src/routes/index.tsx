@@ -67,6 +67,14 @@ function Home() {
     initialData: data.breaking,
     staleTime: 30_000,
   });
+  // Main Telangana news, auto-refreshed from the same news API feed as other sections.
+  const telanganaQ = useQuery({
+    queryKey: ["telangana-live"],
+    queryFn: () => getSectionFeed({ data: { section: "telangana", page: 0, pageSize: 12 } }),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+  const telanganaLive = (telanganaQ.data?.rows ?? []) as A[];
   const originalsQ = useQuery({
     queryKey: ["nv-originals", 0],
     queryFn: () => getOriginals({ data: { page: 0, pageSize: 6 } }),
