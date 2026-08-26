@@ -101,6 +101,7 @@ function Home() {
     ...(data.featured ? [data.featured] : []),
     ...data.breaking,
     ...(data.telanganaLead ? [data.telanganaLead] : []),
+    ...telanganaLive,
     ...data.telanganaRail,
     ...data.hyderabad,
     ...data.trending,
