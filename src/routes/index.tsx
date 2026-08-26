@@ -76,7 +76,7 @@ function Home() {
     initialData: data.breaking,
     staleTime: 30_000,
   });
-  // Main Telangana news, auto-refreshed from the same news API feed as other sections.
+  const breakingLive = ((breaking.data ?? []) as A[]);
   const telanganaQ = useQuery({
     queryKey: ["telangana-live"],
     queryFn: () => getSectionFeed({ data: { section: "telangana", page: 0, pageSize: 12 } }),
