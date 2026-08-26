@@ -90,7 +90,13 @@ function Home() {
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
-  const originals = ((originalsQ.data?.rows ?? []) as A[]).map((a) => ({ ...a, is_featured: true }));
+  // Originals only get hero priority while they are still fresh (< 48h old),
+  // otherwise the hero would stay stuck on an old editorial piece.
+  const allOriginals = (originalsQ.data?.rows ?? []) as A[];
+  const isFresh = (a: A) =>
+    !!a.published_at && Date.now() - Date.parse(a.published_at) < 48 * 3_600_000;
+  const originals = allOriginals.filter(isFresh).map((a) => ({ ...a, is_featured: true }));
+  const staleOriginals = allOriginals.filter((a) => !isFresh(a));
 
 
   const [session, setSession] = useState<{ email: string } | null>(null);
