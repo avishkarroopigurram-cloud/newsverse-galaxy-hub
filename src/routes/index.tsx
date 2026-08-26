@@ -131,6 +131,19 @@ function Home() {
     4,
   );
   const hyderabad = take(data.hyderabad, 3);
+
+  // Header live ticker: breaking headlines plus the freshest Telangana stories.
+  const tickerItems = (() => {
+    const out: A[] = [];
+    const ids = new Set<string>();
+    for (const a of [...((breaking.data ?? []) as A[]), ...telanganaLive]) {
+      if (ids.has(a.id)) continue;
+      ids.add(a.id);
+      out.push(a);
+      if (out.length >= 12) break;
+    }
+    return out;
+  })();
   const trending = data.trending; // ranked; may overlap intentionally
   const editors = take(data.editorsPicks, 4);
   const moreLatest = take(rankedLatest, 8);
