@@ -59,7 +59,16 @@ type A = {
 const ACCENT = "#c8102e"; // editorial red
 
 function Home() {
-  const { data } = useSuspenseQuery(feedQuery);
+  const { data: initialFeed } = useSuspenseQuery(feedQuery);
+  // Hero/homepage feed auto-refreshes from the same news API as the other sections.
+  const feedQ = useQuery({
+    queryKey: ["homepage-feed-live"],
+    queryFn: () => getHomepageFeed(),
+    initialData: initialFeed,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+  const data = feedQ.data ?? initialFeed;
   const breaking = useQuery({
     queryKey: ["breaking-live"],
     queryFn: () => getBreaking(),
@@ -78,9 +87,11 @@ function Home() {
   const originalsQ = useQuery({
     queryKey: ["nv-originals", 0],
     queryFn: () => getOriginals({ data: { page: 0, pageSize: 6 } }),
-    staleTime: 60_000,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
   });
   const originals = ((originalsQ.data?.rows ?? []) as A[]).map((a) => ({ ...a, is_featured: true }));
+
 
   const [session, setSession] = useState<{ email: string } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -692,7 +703,8 @@ function SijOriginals() {
   const q = useQuery({
     queryKey: ["nv-originals", page],
     queryFn: () => getOriginals({ data: { page, pageSize } }),
-    staleTime: 60_000,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
   });
   const rows = (q.data?.rows ?? []) as A[];
   if (!q.isLoading && rows.length === 0 && page === 0) return null;
