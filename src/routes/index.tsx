@@ -222,7 +222,7 @@ function Home() {
           </nav>
         )}
 
-        {breaking.data && breaking.data.length > 0 && (
+        {tickerItems.length > 0 && (
           <div className="border-t border-neutral-200 bg-neutral-50">
             <div className="max-w-[1400px] mx-auto relative h-10 md:h-11 flex items-center px-4 md:px-6 overflow-hidden">
               <span
@@ -238,7 +238,7 @@ function Home() {
               />
               <div className="pl-20 md:pl-24 w-full overflow-hidden">
                 <div className="flex gap-10 animate-[nv-scroll_10s_linear_infinite] whitespace-nowrap text-sm text-neutral-800 will-change-transform">
-                  {[...breaking.data, ...breaking.data].map((b, i) => (
+                  {[...tickerItems, ...tickerItems].map((b, i) => (
                     <Link key={`${b.id}-${i}`} to="/article/$slug" params={{ slug: b.slug }} className="hover:text-black inline-flex items-center gap-2">
                       <span className="font-semibold" style={{ color: ACCENT }}>●</span>
                       <span>{b.title}</span>
