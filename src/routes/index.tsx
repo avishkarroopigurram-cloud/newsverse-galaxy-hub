@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { getHomepageFeed, getBreaking, getOriginals } from "@/lib/news.functions";
+import { getHomepageFeed, getBreaking, getOriginals, getSectionFeed } from "@/lib/news.functions";
 import { pickEditorialLead, sortByEditorialPriority } from "@/lib/editorial-priority";
 import { prettySourceName } from "@/lib/source-name";
 
