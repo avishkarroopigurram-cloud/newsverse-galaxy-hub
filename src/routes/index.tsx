@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { getHomepageFeed, getBreaking, getOriginals } from "@/lib/news.functions";
+import { getHomepageFeed, getBreaking, getOriginals, getSectionFeed } from "@/lib/news.functions";
 import { pickEditorialLead, sortByEditorialPriority } from "@/lib/editorial-priority";
 import { prettySourceName } from "@/lib/source-name";
 
@@ -67,6 +67,14 @@ function Home() {
     initialData: data.breaking,
     staleTime: 30_000,
   });
+  // Main Telangana news, auto-refreshed from the same news API feed as other sections.
+  const telanganaQ = useQuery({
+    queryKey: ["telangana-live"],
+    queryFn: () => getSectionFeed({ data: { section: "telangana", page: 0, pageSize: 12 } }),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+  const telanganaLive = (telanganaQ.data?.rows ?? []) as A[];
   const originalsQ = useQuery({
     queryKey: ["nv-originals", 0],
     queryFn: () => getOriginals({ data: { page: 0, pageSize: 6 } }),
@@ -93,6 +101,7 @@ function Home() {
     ...(data.featured ? [data.featured] : []),
     ...data.breaking,
     ...(data.telanganaLead ? [data.telanganaLead] : []),
+    ...telanganaLive,
     ...data.telanganaRail,
     ...data.hyderabad,
     ...data.trending,
@@ -117,8 +126,24 @@ function Home() {
   // Top stories rail also follows editorial priority (not just recency).
   const rankedLatest = sortByEditorialPriority(data.latest) as A[];
   const topStories = take(rankedLatest, 4);
-  const telanganaRail = take([data.telanganaLead, ...data.telanganaRail].filter(Boolean) as A[], 4);
+  const telanganaRail = take(
+    [data.telanganaLead, ...telanganaLive, ...data.telanganaRail].filter(Boolean) as A[],
+    4,
+  );
   const hyderabad = take(data.hyderabad, 3);
+
+  // Header live ticker: breaking headlines plus the freshest Telangana stories.
+  const tickerItems = (() => {
+    const out: A[] = [];
+    const ids = new Set<string>();
+    for (const a of [...((breaking.data ?? []) as A[]), ...telanganaLive]) {
+      if (ids.has(a.id)) continue;
+      ids.add(a.id);
+      out.push(a);
+      if (out.length >= 12) break;
+    }
+    return out;
+  })();
   const trending = data.trending; // ranked; may overlap intentionally
   const editors = take(data.editorsPicks, 4);
   const moreLatest = take(rankedLatest, 8);
@@ -210,7 +235,7 @@ function Home() {
           </nav>
         )}
 
-        {breaking.data && breaking.data.length > 0 && (
+        {tickerItems.length > 0 && (
           <div className="border-t border-neutral-200 bg-neutral-50">
             <div className="max-w-[1400px] mx-auto relative h-10 md:h-11 flex items-center px-4 md:px-6 overflow-hidden">
               <span
@@ -226,7 +251,7 @@ function Home() {
               />
               <div className="pl-20 md:pl-24 w-full overflow-hidden">
                 <div className="flex gap-10 animate-[nv-scroll_10s_linear_infinite] whitespace-nowrap text-sm text-neutral-800 will-change-transform">
-                  {[...breaking.data, ...breaking.data].map((b, i) => (
+                  {[...tickerItems, ...tickerItems].map((b, i) => (
                     <Link key={`${b.id}-${i}`} to="/article/$slug" params={{ slug: b.slug }} className="hover:text-black inline-flex items-center gap-2">
                       <span className="font-semibold" style={{ color: ACCENT }}>●</span>
                       <span>{b.title}</span>
@@ -660,7 +685,6 @@ function FooterCol({ title, children }: { title: string; children: React.ReactNo
 // ---------------- CATEGORY STRIPS ----------------
 // Lazy secondary sections rendered client-side per category.
 
-import { getSectionFeed } from "@/lib/news.functions";
 
 function SijOriginals() {
   const [page, setPage] = useState(0);
