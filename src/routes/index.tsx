@@ -727,6 +727,16 @@ function SijOriginals() {
     staleTime: 30_000,
   });
   const rows = (q.data?.rows ?? []) as A[];
+  // Telangana politics first, then the rest of the live politics feed.
+  const politicsAll = (politicsQ.data?.rows ?? []) as A[];
+  const isTelPolitics = (a: A) =>
+    /telangana|hyderabad|revanth|ktr|kcr|kavitha|harish rao|rama rao|\bbrs\b|\btrsc\b/i.test(
+      `${a.title} ${(a.keywords ?? []).join(" ")}`,
+    );
+  const politicsRows = [
+    ...politicsAll.filter(isTelPolitics),
+    ...politicsAll.filter((a) => !isTelPolitics(a)),
+  ].slice(0, 6);
   if (!q.isLoading && rows.length === 0 && page === 0) return null;
 
   const [lead, ...rest] = rows;
