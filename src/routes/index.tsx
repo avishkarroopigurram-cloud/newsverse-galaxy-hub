@@ -739,7 +739,15 @@ function SijOriginals() {
   ].slice(0, 6);
   if (!q.isLoading && rows.length === 0 && page === 0) return null;
 
-  const [lead, ...rest] = rows;
+  // Page 0: newest first — live Telangana politics stories mix with originals so the lead is always latest.
+  const ts = (a: A) => new Date((a as any).published_at ?? 0).getTime() || 0;
+  const merged =
+    page === 0
+      ? [...rows, ...politicsRows.filter((p) => p.image_url && !rows.some((r) => r.id === p.id))].sort(
+          (x, y) => ts(y) - ts(x),
+        )
+      : rows;
+  const [lead, ...rest] = merged;
   const shareUrl = (slug: string) =>
     encodeURIComponent(`https://southindiajournal.com/article/${slug}`);
 

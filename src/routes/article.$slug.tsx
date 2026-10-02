@@ -50,7 +50,7 @@ export const Route = createFileRoute("/article/$slug")({
     };
   },
   component: ArticlePage,
-  errorComponent: ({ error }) => <div className="min-h-screen bg-black text-white p-8">Error: {error.message}</div>,
+  errorComponent: ({ error }) => <div className="min-h-screen bg-black text-white p-8">Error: {(error as Error).message}</div>,
   notFoundComponent: () => (
     <div className="min-h-screen bg-black text-white flex items-center justify-center flex-col gap-4">
       <h1 className="text-2xl">Article not found</h1>

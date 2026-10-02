@@ -19,7 +19,7 @@ export const Route = createFileRoute("/section/$slug")({
     };
   },
   component: SectionPage,
-  errorComponent: ({ error }) => <div className="min-h-screen bg-black text-white p-8">Error: {error.message}</div>,
+  errorComponent: ({ error }) => <div className="min-h-screen bg-black text-white p-8">Error: {(error as Error).message}</div>,
   notFoundComponent: () => <div className="min-h-screen bg-black text-white p-8">Section not found</div>,
 });
 
