@@ -169,7 +169,8 @@ function Home() {
     return out;
   })();
   const trending = data.trending; // ranked; may overlap intentionally
-  const editors = take(data.editorsPicks, 4);
+  // Editor's Picks: latest live Telangana news from the API.
+  const editors = take([...telanganaLive, ...data.telanganaRail], 4);
   const moreLatest = take(rankedLatest, 8);
 
   return (
@@ -722,21 +723,27 @@ function SijOriginals() {
   // Live politics feed (auto-updates via the news API, like every other section).
   const politicsQ = useQuery({
     queryKey: ["politics-live-orig"],
-    queryFn: () => getSectionFeed({ data: { section: "politics", page: 0, pageSize: 9 } }),
+    queryFn: () => getSectionFeed({ data: { section: "politics", page: 0, pageSize: 20 } }),
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
-  const rows = (q.data?.rows ?? []) as A[];
-  // Telangana politics first, then the rest of the live politics feed.
-  const politicsAll = (politicsQ.data?.rows ?? []) as A[];
+  const telQ = useQuery({
+    queryKey: ["telangana-live-orig"],
+    queryFn: () => getSectionFeed({ data: { section: "telangana", page: 0, pageSize: 12 } }),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
   const isTelPolitics = (a: A) =>
-    /telangana|hyderabad|revanth|ktr|kcr|kavitha|harish rao|rama rao|\bbrs\b|\btrsc\b/i.test(
+    a.category === "telangana" ||
+    /telangana|hyderabad|revanth|ktr|kcr|kavitha|harish rao|rama rao|\bbrs\b|\btpcc\b/i.test(
       `${a.title} ${(a.keywords ?? []).join(" ")}`,
     );
+  // Telangana-only: original articles and live API stories.
+  const rows = ((q.data?.rows ?? []) as A[]).filter(isTelPolitics);
   const politicsRows = [
-    ...politicsAll.filter(isTelPolitics),
-    ...politicsAll.filter((a) => !isTelPolitics(a)),
-  ].slice(0, 6);
+    ...((politicsQ.data?.rows ?? []) as A[]).filter(isTelPolitics),
+    ...((telQ.data?.rows ?? []) as A[]),
+  ].slice(0, 12);
   // Only recent news (last 7 days): old originals are hidden; live API stories fill the section, newest first.
   const ts = (a: A) => new Date((a as any).published_at ?? 0).getTime() || 0;
   const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
