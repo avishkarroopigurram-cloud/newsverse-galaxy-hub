@@ -740,6 +740,8 @@ function SijOriginals() {
     );
   // Telangana-only: original articles and live API stories.
   const rows = ((q.data?.rows ?? []) as A[]).filter(isTelPolitics);
+  // Latest Politics strip: all-India politics, newest first.
+  const indiaPolitics = ((politicsQ.data?.rows ?? []) as A[]).slice(0, 9);
   const politicsRows = [
     ...((politicsQ.data?.rows ?? []) as A[]).filter(isTelPolitics),
     ...((telQ.data?.rows ?? []) as A[]),
@@ -820,7 +822,7 @@ function SijOriginals() {
               </button>
             </div>
           </div>
-          {politicsRows.length > 0 && (
+          {indiaPolitics.length > 0 && (
             <div className="mt-12">
               <div className="flex items-center gap-3 border-b border-neutral-200 pb-3">
                 <span className="h-[2px] w-8" style={{ backgroundColor: ACCENT }} />
@@ -833,7 +835,7 @@ function SijOriginals() {
                 </span>
               </div>
               <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {politicsRows.map((a) => (
+                {indiaPolitics.map((a) => (
                   <OriginalCard key={a.id} article={a} compact badge={false} />
                 ))}
               </div>
