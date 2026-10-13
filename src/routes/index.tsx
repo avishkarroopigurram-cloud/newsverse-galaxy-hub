@@ -737,16 +737,15 @@ function SijOriginals() {
     ...politicsAll.filter(isTelPolitics),
     ...politicsAll.filter((a) => !isTelPolitics(a)),
   ].slice(0, 6);
-  if (!q.isLoading && rows.length === 0 && page === 0) return null;
-
-  // Page 0: newest first — live Telangana politics stories mix with originals so the lead is always latest.
+  // Only recent news (last 7 days): old originals are hidden; live API stories fill the section, newest first.
   const ts = (a: A) => new Date((a as any).published_at ?? 0).getTime() || 0;
-  const merged =
-    page === 0
-      ? [...rows, ...politicsRows.filter((p) => p.image_url && !rows.some((r) => r.id === p.id))].sort(
-          (x, y) => ts(y) - ts(x),
-        )
-      : rows;
+  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const recentOriginals = rows.filter((a) => ts(a) >= cutoff);
+  const merged = [
+    ...recentOriginals,
+    ...politicsRows.filter((p) => p.image_url && ts(p) >= cutoff && !recentOriginals.some((r) => r.id === p.id)),
+  ].sort((x, y) => ts(y) - ts(x));
+  if (!q.isLoading && !politicsQ.isLoading && merged.length === 0) return null;
   const [lead, ...rest] = merged;
   const shareUrl = (slug: string) =>
     encodeURIComponent(`https://southindiajournal.com/article/${slug}`);
